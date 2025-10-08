@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace TerrainGeneration
 {
@@ -21,15 +21,17 @@ namespace TerrainGeneration
         public float IsoLevel = 0.0f;
 
         /// <summary>
-        /// When enabled, faces are flipped to allow the creation cave-worlds.
+        /// When enabled, the world is filled in by default and subtractive brushes must be used to carve holes.
         /// </summary>
-        [Tooltip("When enabled, faces are flipped to allow the creation cave-worlds.")]
-        public bool InvertFaces = false;
+        [Tooltip("When enabled, the world is filled in by default and subtractive brushes must be used to carve holes.")]
+        public bool InvertTerrain = false;
 
         public Material Material;
         #endregion
 
         public bool PropertyChanged;
+
+        public bool IsGenerated => m_Chunks != null;
 
         int3 m_ChunkDimentions;
         Chunk[,,] m_Chunks;
@@ -42,7 +44,6 @@ namespace TerrainGeneration
         public void Generate()
         {
             m_ChunkDimentions = Dimentions;
-
             m_Chunks = new Chunk[m_ChunkDimentions.x, m_ChunkDimentions.y, m_ChunkDimentions.z];
             for (int x = 0; x < m_ChunkDimentions.x; x++)
             {
@@ -76,13 +77,15 @@ namespace TerrainGeneration
         /// </summary>
         public void Recompute(TerrainShape[] shapeQueue)
         {
+            float baseDensity = InvertTerrain ? -32 : 32;
+
             for (int x = 0; x < m_ChunkDimentions.x; x++)
             {
                 for (int y = 0; y < m_ChunkDimentions.y; y++)
                 {
                     for (int z = 0; z < m_ChunkDimentions.z; z++)
                     {
-                        m_Chunks[x, y, z].DensityMap.FillDensityMap(32);
+                        m_Chunks[x, y, z].DensityMap.FillDensityMap(baseDensity);
                         foreach (TerrainShape shape in shapeQueue)
                             m_Chunks[x, y, z].DensityMap.ApplyShape(shape);
                     }
@@ -98,26 +101,24 @@ namespace TerrainGeneration
         public void ApplyShapeAtPosition(TerrainShape shape, Vector3 positionWS)
         {
             ComputeIndices(WorldPositionToIndex(positionWS), out int3 chunkIndex, out _);
-            int3[] updateChunkIndices = new int3[9]
-            {
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0),
-                chunkIndex + new int3(0, 0, 0)
-            };
+            List<int3> updateChunks = new();
 
             // Apply density functions.
-            foreach (int3 index in updateChunkIndices)
-                m_Chunks[index.x, index.y, index.z].DensityMap.ApplyShape(shape);
+            for (int i = 0; i < 27; i++)
+            {
+                int3 index = chunkIndex + k_AdjacentChunkIndices[i];
+                if (index.x < 0 || index.x > m_ChunkDimentions.x - 1 ||
+                    index.y < 0 || index.y > m_ChunkDimentions.y - 1 ||
+                    index.z < 0 || index.z > m_ChunkDimentions.z - 1)
+                    continue;
 
-            // Update meshses.
-            foreach (int3 index in updateChunkIndices)
-                UpdateChunk(index.x, index.y, chunkIndex.z);
+                m_Chunks[index.x, index.y, index.z].DensityMap.ApplyShape(shape);
+                updateChunks.Add(index);
+            }
+
+            // Update meshes.
+            foreach (int3 index in updateChunks)
+                UpdateChunk(index.x, index.y, index.z);
         }
 
         void UpdateAllChunks()
@@ -224,7 +225,8 @@ namespace TerrainGeneration
     {
         public Matrix4x4 matrix;
         public ShapeFuncion shapeID;
-        public float smoothness;
+        public BlendMode blendMode;
+        public float sharpness;
         public float dimention1;
         public float dimention2;
     }
@@ -232,5 +234,11 @@ namespace TerrainGeneration
     public enum ShapeFuncion
     {
         Sphere
+    }
+
+    public enum BlendMode
+    {
+        Additive,
+        Subtractive
     }
 }

@@ -5,15 +5,33 @@ namespace TerrainGeneration.Debugging
     [RequireComponent(typeof(Camera))]
     public class TerrainPainter : MonoBehaviour
     {
-        const float k_RayLength = 100;
+        const float k_RayLength = 200;
+        float m_LastInputTime;
+
+        void Start()
+        {
+            m_LastInputTime = float.NegativeInfinity;
+        }
 
         void Update()
         {
-            if (Input.GetMouseButtonDown(0))
-                TryMineTerrain();
+            if (Time.time > m_LastInputTime + 0.1f)
+            {
+                if (Input.GetMouseButton(0))
+                {
+                    ApplyTerrainShape(BlendMode.Additive);
+                    m_LastInputTime = Time.time;
+                }
+
+                if (Input.GetMouseButton(1))
+                {
+                    ApplyTerrainShape(BlendMode.Subtractive);
+                    m_LastInputTime = Time.time;
+                }
+            }
         }
 
-        void TryMineTerrain()
+        void ApplyTerrainShape(BlendMode blendMode)
         {
             GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint);
             if (terrain)
@@ -22,20 +40,14 @@ namespace TerrainGeneration.Debugging
                 {
                     matrix = Matrix4x4.TRS(hitPoint, Quaternion.identity, Vector3.one).inverse,
                     shapeID = ShapeFuncion.Sphere,
-                    smoothness = 1,
-                    dimention1 = 2
+                    blendMode = blendMode,
+                    sharpness = 1,
+                    dimention1 = 1
                 };
 
                 terrain.ApplyShapeAtPosition(shape, hitPoint);
             }
         }
-
-        /*
-        void TryBuild()
-        {
-            // TODO
-        }
-        */
 
         void GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint)
         {

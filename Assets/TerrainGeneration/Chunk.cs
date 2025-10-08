@@ -44,7 +44,7 @@ namespace TerrainGeneration
             m_MeshRenderer = gameObject.AddComponent<MeshRenderer>();
             m_Collider = gameObject.AddComponent<MeshCollider>();
 
-            gameObject.hideFlags = HideFlags.HideInHierarchy;
+            gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
         }
 
         public void Destroy()

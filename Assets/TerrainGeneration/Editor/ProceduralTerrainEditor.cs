@@ -9,7 +9,7 @@ namespace TerrainGeneration
     {
         SerializedProperty m_Dimentions;
         SerializedProperty m_IsoLevel;
-        SerializedProperty m_InvertFaces;
+        SerializedProperty m_InvertTerrain;
         SerializedProperty m_Material;
 
         void OnEnable()
@@ -18,7 +18,7 @@ namespace TerrainGeneration
 
             m_Dimentions = o.Find(x => x.Dimentions);
             m_IsoLevel = o.Find(x => x.IsoLevel);
-            m_InvertFaces = o.Find(x => x.InvertFaces);
+            m_InvertTerrain = o.Find(x => x.InvertTerrain);
             m_Material = o.Find(x => x.Material);
         }
 
@@ -28,7 +28,7 @@ namespace TerrainGeneration
 
             EditorGUILayout.PropertyField(m_Dimentions, new GUIContent("Dimentions"));
             EditorGUILayout.PropertyField(m_IsoLevel, new GUIContent("Iso Level"));
-            EditorGUILayout.PropertyField(m_InvertFaces, new GUIContent("Invert Faces"));
+            EditorGUILayout.PropertyField(m_InvertTerrain, new GUIContent("Invert Terrain"));
             EditorGUILayout.PropertyField(m_Material, new GUIContent("Material"));
 
             serializedObject.ApplyModifiedProperties();

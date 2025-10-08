@@ -6,9 +6,10 @@ using UnityEngine;
 namespace TerrainGeneration.RealtimeEditor
 {
     [CustomEditor(typeof(ShapeBrush))]
-    class TerrainShaperEditor : Editor
+    class ShapeBrushEditor : Editor
     {
         SerializedProperty m_Shape;
+        SerializedProperty m_BlendMode;
         SerializedProperty m_SmoothnessConstant;
         SerializedProperty m_Dimention1;
         SerializedProperty m_Dimention2;
@@ -21,7 +22,8 @@ namespace TerrainGeneration.RealtimeEditor
             var o = new PropertyFetcher<ShapeBrush>(serializedObject);
 
             m_Shape = o.Find(x => x.Shape);
-            m_SmoothnessConstant = o.Find(x => x.SmoothnessConstant);
+            m_BlendMode = o.Find(x => x.BlendMode);
+            m_SmoothnessConstant = o.Find(x => x.Sharpness);
             m_Dimention1 = o.Find(x => x.Dimention1);
             m_Dimention2 = o.Find(x => x.Dimention2);
 
@@ -35,7 +37,8 @@ namespace TerrainGeneration.RealtimeEditor
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(m_Shape, new GUIContent("Shape"));
-            EditorGUILayout.PropertyField(m_SmoothnessConstant, new GUIContent("Smoothness"));
+            EditorGUILayout.PropertyField(m_BlendMode, new GUIContent("Blend Mode"));
+            EditorGUILayout.PropertyField(m_SmoothnessConstant, new GUIContent("Sharpness"));
 
             switch (m_Target.Shape)
             {

@@ -19,7 +19,8 @@ namespace TerrainGeneration.RealtimeEditor
             EditorApplication.update += EvaluatePropertyChanged;
 
             m_Terrain = GetComponent<ProceduralTerrain>();
-            m_Terrain.Generate();
+            if (!m_Terrain.IsGenerated)
+                m_Terrain.Generate();
 
             TerrainShape[] shapeQueue = new TerrainShape[Brushes.Length];
             for (int i = 0; i < Brushes.Length; i++)
@@ -52,13 +53,23 @@ namespace TerrainGeneration.RealtimeEditor
             for (int i = 0; i < Brushes.Length; i++)
             {
                 ShapeBrush shaper = Brushes[i];
-                shapeQueue[i] = shaper.GetShapeProperties();
 
+                // Check queue order.
+                if (shaper.OrderInQueue != i)
+                {
+                    shaper.OrderInQueue = i;
+                    recalculateTerrain = true;
+                }
+
+                // Check property changed.
                 if (shaper.PropertyChanged)
                 {
                     shaper.PropertyChanged = false;
                     recalculateTerrain = true;
                 }
+
+                // Add brush to shape queue.
+                shapeQueue[i] = shaper.GetShapeProperties();
             }
 
             // Evaluate changes in queue length.

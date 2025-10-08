@@ -56,7 +56,16 @@ namespace TerrainGeneration
                     break;
             }
 
-            densityArray[x, y, z] = SmoothMin(distance, densityArray[x, y, z], shape.smoothness);
+            switch (shape.blendMode)
+            {
+                case BlendMode.Additive:
+                    densityArray[x, y, z] = SmoothMin(distance, densityArray[x, y, z], shape.sharpness);
+                    break;
+
+                case BlendMode.Subtractive:
+                    densityArray[x, y, z] = SmoothMax(-distance, densityArray[x, y, z], shape.sharpness);
+                    break;
+            }    
         }
 
         public float Sample(int x, int y, int z)

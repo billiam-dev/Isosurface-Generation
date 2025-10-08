@@ -50,9 +50,7 @@ namespace TerrainGeneration
                     float3 normalA = CalculateNormal(coordA);
                     float3 normalB = CalculateNormal(coordB);
                     float3 normal = Vector3.Normalize(normalA + t * (normalB - normalA));
-                    if (InvertFaces)
-                        normal = -normal;
-
+                    
                     // ID (for de-duplication)
                     int indexA = densityMap.FlattenIndex(coordA);
                     int indexB = densityMap.FlattenIndex(coordB);
@@ -88,14 +86,8 @@ namespace TerrainGeneration
                 // The value is used to look up the edge table, which indicates which edges of the cube the surface passes through.
                 int cubeConfiguration = 0;
                 for (int i = 0; i < 8; i++)
-                {
-                    float density = densityMap.Sample(cornerCoords[i]);
-                    if (InvertFaces)
-                        density = -density;
-
-                    if (density < terrain.IsoLevel)
+                    if (densityMap.Sample(cornerCoords[i]) < terrain.IsoLevel)
                         cubeConfiguration |= 1 << i;
-                }
 
                 // Exit early if there are no intersections, index.e. the cube is full or empty.
                 if (cubeConfiguration == 0 || cubeConfiguration == 0xff)
@@ -142,5 +134,36 @@ namespace TerrainGeneration
 
             return mesh;
         }
+
+        readonly int3[] k_AdjacentChunkIndices = new int3[27]
+        {
+            new(-1, -1, -1),
+            new(-1, -1, 0),
+            new(-1, -1, 1),
+            new(-1, 0, -1),
+            new(-1, 0, 0),
+            new(-1, 0, 1),
+            new(-1, 1, -1),
+            new(-1, 1, 0),
+            new(-1, 1, 1),
+            new(0, -1, -1),
+            new(0, -1, 0),
+            new(0, -1, 1),
+            new(0, 0, -1),
+            new(0, 0, 0),
+            new(0, 0, 1),
+            new(0, 1, -1),
+            new(0, 1, 0),
+            new(0, 1, 1),
+            new(1, -1, -1),
+            new(1, -1, 0),
+            new(1, -1, 1),
+            new(1, 0, -1),
+            new(1, 0, 0),
+            new(1, 0, 1),
+            new(1, 1, -1),
+            new(1, 1, 0),
+            new(1, 1, 1)
+        };
     }
 }
