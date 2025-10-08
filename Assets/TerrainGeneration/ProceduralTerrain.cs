@@ -1,7 +1,13 @@
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
+using static UnityEngine.InputManagerEntry;
 
 namespace TerrainGeneration
 {
@@ -34,7 +40,7 @@ namespace TerrainGeneration
         public bool IsGenerated => m_Chunks != null;
 
         int3 m_ChunkDimentions;
-        Chunk[,,] m_Chunks;
+        Chunk[] m_Chunks;
 
         const int k_ChunkSize = 8;
 
@@ -44,20 +50,16 @@ namespace TerrainGeneration
         public void Generate()
         {
             m_ChunkDimentions = Dimentions;
-            m_Chunks = new Chunk[m_ChunkDimentions.x, m_ChunkDimentions.y, m_ChunkDimentions.z];
-            for (int x = 0; x < m_ChunkDimentions.x; x++)
+            m_Chunks = new Chunk[m_ChunkDimentions.x * m_ChunkDimentions.y * m_ChunkDimentions.z];
+            for (int i = 0; i < m_Chunks.Length; i++)
             {
-                for (int y = 0; y < m_ChunkDimentions.y; y++)
-                {
-                    for (int z = 0; z < m_ChunkDimentions.z; z++)
-                    {
-                        Chunk newChunk = Chunk.New(x, y, z, k_ChunkSize);
-                        newChunk.transform.SetParent(transform);
-                        newChunk.transform.localPosition = new Vector3(x, y, z) * k_ChunkSize;
+                int3 chunkIndex = WrapChunkIndex(i);
 
-                        m_Chunks[x, y, z] = newChunk;
-                    }
-                }
+                Chunk newChunk = Chunk.New(chunkIndex, k_ChunkSize);
+                newChunk.transform.SetParent(transform);
+                newChunk.transform.localPosition = new Vector3(chunkIndex.x, chunkIndex.y, chunkIndex.z) * k_ChunkSize;
+
+                m_Chunks[i] = newChunk;
             }
         }
 
@@ -79,17 +81,11 @@ namespace TerrainGeneration
         {
             float baseDensity = InvertTerrain ? -32 : 32;
 
-            for (int x = 0; x < m_ChunkDimentions.x; x++)
+            for (int i = 0; i < m_Chunks.Length; i++)
             {
-                for (int y = 0; y < m_ChunkDimentions.y; y++)
-                {
-                    for (int z = 0; z < m_ChunkDimentions.z; z++)
-                    {
-                        m_Chunks[x, y, z].DensityMap.FillDensityMap(baseDensity);
-                        foreach (TerrainShape shape in shapeQueue)
-                            m_Chunks[x, y, z].DensityMap.ApplyShape(shape);
-                    }
-                }
+                m_Chunks[i].DensityMap.FillDensityMap(baseDensity);
+                foreach (TerrainShape shape in shapeQueue)
+                    m_Chunks[i].DensityMap.ApplyShape(shape);
             }
 
             UpdateAllChunks();
@@ -101,40 +97,65 @@ namespace TerrainGeneration
         public void ApplyShapeAtPosition(TerrainShape shape, Vector3 positionWS)
         {
             ComputeIndices(WorldPositionToIndex(positionWS), out int3 chunkIndex, out _);
-            List<int3> updateChunks = new();
+            List<int> updateChunks = new();
 
             // Apply density functions.
             for (int i = 0; i < 27; i++)
             {
-                int3 index = chunkIndex + k_AdjacentChunkIndices[i];
-                if (index.x < 0 || index.x > m_ChunkDimentions.x - 1 ||
-                    index.y < 0 || index.y > m_ChunkDimentions.y - 1 ||
-                    index.z < 0 || index.z > m_ChunkDimentions.z - 1)
+                int3 wrappedIndex = chunkIndex + k_AdjacentChunkIndices[i];
+                if (wrappedIndex.x < 0 || wrappedIndex.x > m_ChunkDimentions.x - 1 ||
+                    wrappedIndex.y < 0 || wrappedIndex.y > m_ChunkDimentions.y - 1 ||
+                    wrappedIndex.z < 0 || wrappedIndex.z > m_ChunkDimentions.z - 1)
                     continue;
 
-                m_Chunks[index.x, index.y, index.z].DensityMap.ApplyShape(shape);
+                int index = FlattenChunkIndex(wrappedIndex);
+                m_Chunks[index].DensityMap.ApplyShape(shape);
                 updateChunks.Add(index);
             }
 
             // Update meshes.
-            foreach (int3 index in updateChunks)
-                UpdateChunk(index.x, index.y, index.z);
+            foreach (int index in updateChunks)
+                UpdateChunk(index);
         }
 
         void UpdateAllChunks()
         {
-            for (int x = 0; x < m_ChunkDimentions.x; x++)
-                for (int y = 0; y < m_ChunkDimentions.y; y++)
-                    for (int z = 0; z < m_ChunkDimentions.z; z++)
-                        UpdateChunk(x, y, z);
+            for (int i = 0; i < m_Chunks.Length; i++)
+                UpdateChunk(i);
         }
 
-        void UpdateChunk(int x, int y, int z)
+        void UpdateChunk(int index)
         {
-            Mesh mesh = MakeMesh(this, m_Chunks[x, y, z].DensityMap, new int3(x, y, z) * k_ChunkSize);
+            Mesh mesh = MakeMesh(m_Chunks[index].DensityMap, WrapChunkIndex(index) * k_ChunkSize);
+            m_Chunks[index].SetMesh(mesh);
+            m_Chunks[index].SetMaterial(Material);
 
-            m_Chunks[x, y, z].SetMesh(mesh);
-            m_Chunks[x, y, z].SetMaterial(Material);
+            /*
+            int numVoxels = m_ChunkDimentions.i * m_ChunkDimentions.sizeY * m_ChunkDimentions.i * k_ChunkSize;
+
+            NativeList<float3> vertices = new();
+            NativeList<float3> normals = new();
+            NativeList<ushort> triangles = new();
+
+            BuildMeshJob meshJob = new BuildMeshJob()
+            {
+                vertices = vertices,
+                normals = normals,
+                triangles = triangles,
+                terrain = this
+            };
+
+            JobHandle dependencyJobHandle = default;
+            JobHandle meshJobHandle = meshJob.ScheduleParallelByRef(numVoxels * 5, 64, dependencyJobHandle);
+            meshJobHandle.Complete();
+
+            m_Chunks[i, sizeY, i].SetMesh(mesh);
+            m_Chunks[i, sizeY, i].SetMaterial(Material);
+
+            vertices.Dispose();
+            normals.Dispose();
+            triangles.Dispose();
+            */
         }
 
         /// <summary>
@@ -147,7 +168,7 @@ namespace TerrainGeneration
 
 #if UNITY_EDITOR
         /// <summary>
-        /// From a world space position, compute the terrain-space index and then break it down into a chunk index and an inter-chunk index.
+        /// From a world space position, compute the terrain-space wrappedIndex and then break it down into a chunk wrappedIndex and a cell wrappedIndex within that chunk.
         /// For debugging.
         /// </summary>
         public void ComputeIndices(Vector3 positionWS, out int3 chunkIndex, out int3 densityIndex)
@@ -156,12 +177,12 @@ namespace TerrainGeneration
         }
 
         /// <summary>
-        /// Get the chunk at the given index.
+        /// Get the chunk at the given wrappedIndex.
         /// For debugging.
         /// </summary>
         public Chunk GetChunk(int3 index)
         {
-            return m_Chunks[index.x, index.y, index.z];
+            return m_Chunks[FlattenChunkIndex(index)];
         }
 #endif
 
@@ -169,26 +190,26 @@ namespace TerrainGeneration
         {
             // TODO: Interpolate between corner samples?
 
-            ComputeIndices(index, out int3 chunkIndex, out int3 densityIndex);
-            return m_Chunks[chunkIndex.x, chunkIndex.y, chunkIndex.z].DensityMap.Sample(densityIndex.x, densityIndex.y, densityIndex.z);
+            ComputeIndices(index, out int3 chunkIndex, out int3 cellIndex);
+            return m_Chunks[FlattenChunkIndex(chunkIndex)].DensityMap.Sample(cellIndex.x, cellIndex.y, cellIndex.z);
         }
 
-        void ComputeIndices(int3 index, out int3 chunkIndex, out int3 densityIndex)
+        void ComputeIndices(int3 index, out int3 chunkIndex, out int3 cellIndex)
         {
             // Clamp distance to terrain bounds.
             float x = Mathf.Clamp(index.x, 0, (m_ChunkDimentions.x * k_ChunkSize) - 0.001f);
             float y = Mathf.Clamp(index.y, 0, (m_ChunkDimentions.y * k_ChunkSize) - 0.001f);
             float z = Mathf.Clamp(index.z, 0, (m_ChunkDimentions.z * k_ChunkSize) - 0.001f);
 
-            // Compute chunk array index.
+            // Compute chunk array wrappedIndex.
             chunkIndex.x = Mathf.FloorToInt(x / k_ChunkSize);
             chunkIndex.y = Mathf.FloorToInt(y / k_ChunkSize);
             chunkIndex.z = Mathf.FloorToInt(z / k_ChunkSize);
 
-            // Compute density map index.
-            densityIndex.x = Mathf.FloorToInt(x - (chunkIndex.x * k_ChunkSize));
-            densityIndex.y = Mathf.FloorToInt(y - (chunkIndex.y * k_ChunkSize));
-            densityIndex.z = Mathf.FloorToInt(z - (chunkIndex.z * k_ChunkSize));
+            // Compute density map wrappedIndex.
+            cellIndex.x = Mathf.FloorToInt(x - (chunkIndex.x * k_ChunkSize));
+            cellIndex.y = Mathf.FloorToInt(y - (chunkIndex.y * k_ChunkSize));
+            cellIndex.z = Mathf.FloorToInt(z - (chunkIndex.z * k_ChunkSize));
         }
 
         int3 WorldPositionToIndex(Vector3 positionWS)

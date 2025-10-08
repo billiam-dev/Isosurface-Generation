@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace TerrainGeneration
 {
     public partial class ProceduralTerrain : MonoBehaviour
     {
-        Mesh MakeMesh(ProceduralTerrain terrain, DensityMap densityMap, int3 chunkOriginIndex)
+        Mesh MakeMesh(DensityMap densityMap, int3 chunkOriginIndex)
         {
             List<Vector3> vertices = new();
             List<Vector3> normals = new();
@@ -25,9 +26,9 @@ namespace TerrainGeneration
                     int3 offsetY = new(0, 1, 0);
                     int3 offsetZ = new(0, 0, 1);
 
-                    float dx = terrain.SampleDensity(samplePos + offsetX) - terrain.SampleDensity(samplePos - offsetX);
-                    float dy = terrain.SampleDensity(samplePos + offsetY) - terrain.SampleDensity(samplePos - offsetY);
-                    float dz = terrain.SampleDensity(samplePos + offsetZ) - terrain.SampleDensity(samplePos - offsetZ);
+                    float dx = SampleDensity(samplePos + offsetX) - SampleDensity(samplePos - offsetX);
+                    float dy = SampleDensity(samplePos + offsetY) - SampleDensity(samplePos - offsetY);
+                    float dz = SampleDensity(samplePos + offsetZ) - SampleDensity(samplePos - offsetZ);
 
                     return new Vector3(dx, dy, dz).normalized;
                 }
@@ -38,12 +39,12 @@ namespace TerrainGeneration
                     float densityA = densityMap.Sample(coordA);
                     float densityB = densityMap.Sample(coordB);
 
-                    // Since the cell size is 1, the index doubles as the position, neat.
+                    // Since the cell sizeInWorld is 1, the index doubles as the position, neat.
                     float3 posA = new(coordA.x, coordA.y, coordA.z);
                     float3 posB = new(coordB.x, coordB.y, coordB.z);
 
                     // Find interpolated position.
-                    float t = (terrain.IsoLevel - densityA) / (densityB - densityA);
+                    float t = (IsoLevel - densityA) / (densityB - densityA);
                     float3 position = posA + t * (posB - posA);
 
                     // Normal
@@ -86,7 +87,7 @@ namespace TerrainGeneration
                 // The value is used to look up the edge table, which indicates which edges of the cube the surface passes through.
                 int cubeConfiguration = 0;
                 for (int i = 0; i < 8; i++)
-                    if (densityMap.Sample(cornerCoords[i]) < terrain.IsoLevel)
+                    if (densityMap.Sample(cornerCoords[i]) < IsoLevel)
                         cubeConfiguration |= 1 << i;
 
                 // Exit early if there are no intersections, index.e. the cube is full or empty.
@@ -94,23 +95,24 @@ namespace TerrainGeneration
                     return;
 
                 // Create triangles for current cube configuration.
+                int[] edgeIndices = MarchTables.triangulation[cubeConfiguration];
                 for (int i = 0; i < 16; i += 3)
                 {
                     // If edge index is -1, then no further vertices exist in this configuration.
-                    if (MarchTables.triangulation[cubeConfiguration, i] == -1)
+                    if (edgeIndices[i] == -1)
                         break;
 
                     // Get indices of the two corner points defining the edge that the surface passes through.
                     // (Do this for each of the three edges we're currently looking at).
-                    int edgeIndexA = MarchTables.triangulation[cubeConfiguration, i];
+                    int edgeIndexA = edgeIndices[i];
                     int a0 = MarchTables.cornerIndexAFromEdge[edgeIndexA];
                     int a1 = MarchTables.cornerIndexBFromEdge[edgeIndexA];
 
-                    int edgeIndexB = MarchTables.triangulation[cubeConfiguration, i + 1];
+                    int edgeIndexB = edgeIndices[i + 1];
                     int b0 = MarchTables.cornerIndexAFromEdge[edgeIndexB];
                     int b1 = MarchTables.cornerIndexBFromEdge[edgeIndexB];
 
-                    int edgeIndexC = MarchTables.triangulation[cubeConfiguration, i + 2];
+                    int edgeIndexC = edgeIndices[i + 2];
                     int c0 = MarchTables.cornerIndexAFromEdge[edgeIndexC];
                     int c1 = MarchTables.cornerIndexBFromEdge[edgeIndexC];
 
@@ -122,9 +124,9 @@ namespace TerrainGeneration
 
             // Loop through all cells filling the verticies and triangles lists.
             // Stop one point before the end because each cell includes neighbouring points.
-            for (int x = 0; x < densityMap.x - 1; x++)
-                for (int y = 0; y < densityMap.y - 1; y++)
-                    for (int z = 0; z < densityMap.z - 1; z++)
+            for (int x = 0; x < densityMap.sizeX - 1; x++)
+                for (int y = 0; y < densityMap.sizeY - 1; y++)
+                    for (int z = 0; z < densityMap.sizeZ - 1; z++)
                         MarchCell(x, y, z);
 
             Mesh mesh = new();
@@ -133,6 +135,23 @@ namespace TerrainGeneration
             mesh.SetNormals(normals);
 
             return mesh;
+        }
+
+        // 3D to 1D
+        int FlattenChunkIndex(int3 index)
+        {
+            return (index.z * m_ChunkDimentions.x * m_ChunkDimentions.y) + (index.y * m_ChunkDimentions.x) + index.x;
+        }
+
+        // 1D to 3D
+        int3 WrapChunkIndex(int index)
+        {
+            int z = index / (m_ChunkDimentions.x * m_ChunkDimentions.y);
+            index -= z * m_ChunkDimentions.x * m_ChunkDimentions.y;
+            int y = index / m_ChunkDimentions.x;
+            int x = index % m_ChunkDimentions.x;
+
+            return new int3(x, y, z);
         }
 
         readonly int3[] k_AdjacentChunkIndices = new int3[27]

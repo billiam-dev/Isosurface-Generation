@@ -5,54 +5,95 @@ namespace TerrainGeneration.Debugging
     [RequireComponent(typeof(Camera))]
     public class TerrainPainter : MonoBehaviour
     {
-        const float k_RayLength = 200;
+        public enum InputMode
+        {
+            Mouse,
+            Camera
+        }
+
+        [SerializeField]
+        InputMode m_InputMode = InputMode.Mouse;
+
+        [SerializeField]
+        float m_RayLength = 200;
+
+        [SerializeField]
+        Mesh m_PointerMesh;
+
+        [SerializeField]
+        Material m_PointerMaterial;
+
+        GameObject m_Pointer;
         float m_LastInputTime;
 
-        void Start()
+        void OnEnable()
         {
             m_LastInputTime = float.NegativeInfinity;
+
+            m_Pointer = new GameObject("Terrain Paint Pointer");
+            MeshFilter meshFilter = m_Pointer.AddComponent<MeshFilter>();
+            MeshRenderer meshRenderer = m_Pointer.AddComponent<MeshRenderer>();
+            meshFilter.sharedMesh = m_PointerMesh;
+            meshRenderer.sharedMaterial = m_PointerMaterial;
+        }
+
+        void OnDisable()
+        {
+            Destroy(m_Pointer);
         }
 
         void Update()
         {
-            if (Time.time > m_LastInputTime + 0.1f)
+            GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint);
+            m_Pointer.transform.position = hitPoint;
+
+            if (terrain && Time.time > m_LastInputTime + 0.1f)
             {
                 if (Input.GetMouseButton(0))
                 {
-                    ApplyTerrainShape(BlendMode.Additive);
-                    m_LastInputTime = Time.time;
+                    ApplyTerrainShape(terrain, hitPoint, BlendMode.Additive);
                 }
 
                 if (Input.GetMouseButton(1))
                 {
-                    ApplyTerrainShape(BlendMode.Subtractive);
-                    m_LastInputTime = Time.time;
+                    ApplyTerrainShape(terrain, hitPoint, BlendMode.Subtractive);
                 }
             }
         }
 
-        void ApplyTerrainShape(BlendMode blendMode)
+        void ApplyTerrainShape(ProceduralTerrain terrain, Vector3 position, BlendMode blendMode)
         {
-            GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint);
-            if (terrain)
+            TerrainShape shape = new()
             {
-                TerrainShape shape = new()
-                {
-                    matrix = Matrix4x4.TRS(hitPoint, Quaternion.identity, Vector3.one).inverse,
-                    shapeID = ShapeFuncion.Sphere,
-                    blendMode = blendMode,
-                    sharpness = 1,
-                    dimention1 = 1
-                };
+                matrix = Matrix4x4.TRS(position, Quaternion.identity, Vector3.one).inverse,
+                shapeID = ShapeFuncion.Sphere,
+                blendMode = blendMode,
+                sharpness = 1,
+                dimention1 = 1
+            };
 
-                terrain.ApplyShapeAtPosition(shape, hitPoint);
-            }
+            terrain.ApplyShapeAtPosition(shape, position);
+
+            m_LastInputTime = Time.time;
         }
 
         void GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            Physics.Raycast(ray, out RaycastHit hitInfo, k_RayLength);
+            Ray ray = new();
+            
+            switch (m_InputMode)
+            {
+                case InputMode.Mouse:
+                    ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    break;
+
+                case InputMode.Camera:
+                    ray.origin = transform.position;
+                    ray.direction = transform.forward;
+                    break;
+            }
+            
+            Physics.Raycast(ray, out RaycastHit hitInfo, m_RayLength);
 
             if (hitInfo.collider)
             {

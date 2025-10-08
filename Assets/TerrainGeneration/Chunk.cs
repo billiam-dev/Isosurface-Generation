@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace TerrainGeneration
@@ -27,18 +28,18 @@ namespace TerrainGeneration
         const float k_RenderDistance = 128.0f;
 
         /// <summary>
-        /// Create a new chunk at the given x, y, z chunk index.
+        /// Create a new chunk at the given sizeX, sizeY, sizeZ chunk index.
         /// </summary>
-        public static Chunk New(int x, int y, int z, int size)
+        public static Chunk New(int3 chunkIndex, int size)
         {
-            Chunk newChunk = new GameObject($"{x}, {y}, {z}").AddComponent<Chunk>();
-            newChunk.Initialize(x, y, z, size);
+            Chunk newChunk = new GameObject($"{chunkIndex.x}, {chunkIndex.y}, {chunkIndex.z}").AddComponent<Chunk>();
+            newChunk.Initialize(chunkIndex, size);
             return newChunk;
         }
 
-        void Initialize(int x, int y, int z, int size)
+        void Initialize(int3 chunkIndex, int size)
         {
-            m_DensityMap = new DensityMap(x, y, z, size);
+            m_DensityMap = new DensityMap(chunkIndex, size);
 
             m_MeshFilter = gameObject.AddComponent<MeshFilter>();
             m_MeshRenderer = gameObject.AddComponent<MeshRenderer>();
@@ -66,7 +67,7 @@ namespace TerrainGeneration
 
         public bool InViewFrustum(Camera camera)
         {
-            Vector3 dimentions = m_DensityMap.size;
+            Vector3 dimentions = m_DensityMap.sizeInWorld;
             Vector3 cameraPos = camera.transform.position;
             Vector3 chunkCentre = transform.position + (dimentions / 2.0f);
 
@@ -82,11 +83,11 @@ namespace TerrainGeneration
         void OnDrawGizmos()
         {
             Gizmos.matrix = transform.localToWorldMatrix;
-            for (int x = 0; x < m_DensityMap.x; x++)
+            for (int x = 0; x < m_DensityMap.sizeX; x++)
             {
-                for (int y = 0; y < m_DensityMap.y; y++)
+                for (int y = 0; y < m_DensityMap.sizeY; y++)
                 {
-                    for (int z = 0; z < m_DensityMap.z; z++)
+                    for (int z = 0; z < m_DensityMap.sizeZ; z++)
                     {
                         float d = m_DensityMap.Sample(x, y, z);
 
@@ -102,7 +103,7 @@ namespace TerrainGeneration
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(1, 1, 1, 0.5f);
 
-            Vector3 dimentions = m_DensityMap.size;
+            Vector3 dimentions = m_DensityMap.sizeInWorld;
             Gizmos.DrawWireCube(dimentions / 2.0f, dimentions * 0.999f);
         }
 #endif

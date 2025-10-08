@@ -550,7 +550,7 @@ GameObject:
   - component: {fileID: 592358471}
   - component: {fileID: 592358470}
   m_Layer: 0
-  m_Name: '0: Sphere Brush (Subtractive)'
+  m_Name: '-1: Sphere Brush (Subtractive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1692,10 +1692,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1550291597}
+  - component: {fileID: 1550291600}
+  - component: {fileID: 1550291599}
   - component: {fileID: 1550291596}
   - component: {fileID: 1550291598}
   - component: {fileID: 1550291595}
-  - component: {fileID: 1550291599}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1833,6 +1834,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 307675575f9d9b2429b113132f57ef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainGeneration.Debug.TerrainPainter
+  m_InputMode: 1
+  m_RayLength: 200
+  m_PointerMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_PointerMaterial: {fileID: 2100000, guid: f71e65df03c77ff4cbfec838ee43f006, type: 2}
+--- !u!114 &1550291600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1550291594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2364a15fef7f2284099b7ca0ffb633eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FreeCamera
+  MoveSpeed: 10
+  MouseSensitivity: 0.3
 --- !u!1 &1550770276
 GameObject:
   m_ObjectHideFlags: 0
@@ -2440,7 +2459,7 @@ GameObject:
   - component: {fileID: 1847358385}
   - component: {fileID: 1847358384}
   m_Layer: 0
-  m_Name: '1: Sphere Brush (Additive)'
+  m_Name: '-1: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2594,7 +2613,7 @@ GameObject:
   - component: {fileID: 1855967137}
   - component: {fileID: 1855967136}
   m_Layer: 0
-  m_Name: '2: Sphere Brush (Subtractive)'
+  m_Name: '-1: Sphere Brush (Subtractive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

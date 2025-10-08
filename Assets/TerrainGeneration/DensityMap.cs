@@ -3,22 +3,22 @@ using UnityEngine;
 
 namespace TerrainGeneration
 {
-    public class DensityMap
+    public struct DensityMap
     {
         readonly float[,,] densityArray;
 
-        public int x => densityArray.GetLength(0);
-        public int y => densityArray.GetLength(1);
-        public int z => densityArray.GetLength(2);
+        public int sizeX => densityArray.GetLength(0);
+        public int sizeY => densityArray.GetLength(1);
+        public int sizeZ => densityArray.GetLength(2);
 
-        public Vector3 size => new(x, y, z);
+        public Vector3 sizeInWorld => new(sizeX, sizeY, sizeZ);
 
         int3 chunkOriginIndex; // The index in the terrain-space density field where this chunk begins.
 
-        public DensityMap(int x, int y, int z, int size)
+        public DensityMap(int3 chunkIndex, int size)
         {
             densityArray = new float[size + 1, size + 1, size + 1];
-            chunkOriginIndex = new int3(x, y, z) * size;
+            chunkOriginIndex = chunkIndex * size;
         }
 
         /// <summary>
@@ -80,7 +80,17 @@ namespace TerrainGeneration
 
         public int FlattenIndex(int3 i)
         {
-            return (i.z * z * y) + (i.y * x) + i.x;
+            return (i.z * sizeZ * sizeY) + (i.y * sizeX) + i.x;
+        }
+
+        public int3 WrapIndex(int index)
+        {
+            int z = index / (sizeX * sizeY);
+            index -= z * sizeX * sizeY;
+            int y = index / sizeX;
+            int x = index % sizeX;
+
+            return new int3(x, y, z);
         }
 
         float SmoothMax(float a, float b, float k)
