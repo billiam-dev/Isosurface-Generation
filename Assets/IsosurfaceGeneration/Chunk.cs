@@ -45,8 +45,7 @@ namespace IsosurfaceGeneration
             m_MeshRenderer = gameObject.AddComponent<MeshRenderer>();
             m_Collider = gameObject.AddComponent<MeshCollider>();
 
-            //gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
-            gameObject.hideFlags = HideFlags.DontSave;
+            gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
         }
 
         public void Destroy()
@@ -81,26 +80,10 @@ namespace IsosurfaceGeneration
         }
 
 #if UNITY_EDITOR
-        // This will crash your computer.
-        /*
-        void OnDrawGizmos()
+        void OnDrawGizmosSelected()
         {
-            Gizmos.matrix = transform.localToWorldMatrix;
-            for (int x = 0; x < m_DensityMap.sizeX; x++)
-            {
-                for (int y = 0; y < m_DensityMap.sizeY; y++)
-                {
-                    for (int z = 0; z < m_DensityMap.sizeZ; z++)
-                    {
-                        float d = m_DensityMap.Sample(x, y, z);
-
-                        Gizmos.color = new Color(d, d, d);
-                        Gizmos.DrawSphere(new Vector3(x, y, z), 0.1f);
-                    }
-                }
-            }
+            DrawBoundsGizmo();
         }
-        */
 
         public void DrawBoundsGizmo()
         {

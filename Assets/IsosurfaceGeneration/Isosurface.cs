@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace IsosurfaceGeneration
 {
-    public partial class Isosurface : MonoBehaviour
+    public class Isosurface : MonoBehaviour
     {
         #region Properties
         public enum IcosurfaceGenerationMethod
@@ -132,26 +132,15 @@ namespace IsosurfaceGeneration
 
         void UpdateChunk(int index)
         {
-            Mesh mesh;
-            switch (MeshingMethod)
+            DensityMap densityMap = m_Chunks[index].DensityMap;
+            int3 chunkOriginIndex = WrapChunkIndex(index) * k_ChunkSize;
+            Mesh mesh = MeshingMethod switch
             {
-                case IcosurfaceGenerationMethod.MarchingCubes:
-                    mesh = MakeMesh_MarchingCubes(m_Chunks[index].DensityMap, WrapChunkIndex(index) * k_ChunkSize);
-                    break;
+                IcosurfaceGenerationMethod.MarchingCubes => MarchingCubes.MakeMesh(this, densityMap, chunkOriginIndex),
+                IcosurfaceGenerationMethod.SurfaceNets => SurfaceNets.MakeMesh(this, densityMap, chunkOriginIndex),
+                _ => new(),
+            };
 
-                case IcosurfaceGenerationMethod.SurfaceNets:
-                    mesh = MakeMesh_SurfaceNets(m_Chunks[index].DensityMap, WrapChunkIndex(index) * k_ChunkSize);
-                    break;
-
-                default:
-                    mesh = new()
-                    {
-                        name = "How did u fuk that up?"
-                    };
-                    break;
-                    
-            }
-            
             m_Chunks[index].SetMesh(mesh);
             m_Chunks[index].SetMaterial(Material);
         }
@@ -184,7 +173,7 @@ namespace IsosurfaceGeneration
         }
 #endif
 
-        float SampleDensity(int3 index)
+        public float SampleDensity(int3 index)
         {
             // TODO: Interpolate between corner samples?
 
@@ -220,6 +209,22 @@ namespace IsosurfaceGeneration
             return new int3(x, y, z);
         }
 
+
+        int FlattenChunkIndex(int3 index)
+        {
+            return (index.z * m_ChunkDimentions.x * m_ChunkDimentions.y) + (index.y * m_ChunkDimentions.x) + index.x;
+        }
+
+        int3 WrapChunkIndex(int index)
+        {
+            int z = index / (m_ChunkDimentions.x * m_ChunkDimentions.y);
+            index -= z * m_ChunkDimentions.x * m_ChunkDimentions.y;
+            int y = index / m_ChunkDimentions.x;
+            int x = index % m_ChunkDimentions.x;
+
+            return new int3(x, y, z);
+        }
+
 #if UNITY_EDITOR
         void OnDrawGizmos()
         {
@@ -238,6 +243,37 @@ namespace IsosurfaceGeneration
             PropertyChanged = true;
         }
 #endif
+
+        readonly int3[] k_AdjacentChunkIndices = new int3[27]
+        {
+            new(-1, -1, -1),
+            new(-1, -1, 0),
+            new(-1, -1, 1),
+            new(-1, 0, -1),
+            new(-1, 0, 0),
+            new(-1, 0, 1),
+            new(-1, 1, -1),
+            new(-1, 1, 0),
+            new(-1, 1, 1),
+            new(0, -1, -1),
+            new(0, -1, 0),
+            new(0, -1, 1),
+            new(0, 0, -1),
+            new(0, 0, 0),
+            new(0, 0, 1),
+            new(0, 1, -1),
+            new(0, 1, 0),
+            new(0, 1, 1),
+            new(1, -1, -1),
+            new(1, -1, 0),
+            new(1, -1, 1),
+            new(1, 0, -1),
+            new(1, 0, 0),
+            new(1, 0, 1),
+            new(1, 1, -1),
+            new(1, 1, 0),
+            new(1, 1, 1)
+        };
     }
 
     public struct Shape

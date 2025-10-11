@@ -19,8 +19,8 @@ namespace IsosurfaceGeneration.RealtimeEditor
             EditorApplication.update += EvaluatePropertyChanged;
 
             m_Isosurface = GetComponent<Isosurface>();
-            if (!m_Isosurface.IsGenerated)
-                m_Isosurface.Generate();
+            m_Isosurface.Destroy();
+            m_Isosurface.Generate();
 
             Shape[] shapeQueue = new Shape[Brushes.Length];
             for (int i = 0; i < Brushes.Length; i++)
