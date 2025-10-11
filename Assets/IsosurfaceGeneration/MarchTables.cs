@@ -1,4 +1,4 @@
-namespace TerrainGeneration
+namespace IsosurfaceGeneration
 {
     public readonly struct MarchTables
     {

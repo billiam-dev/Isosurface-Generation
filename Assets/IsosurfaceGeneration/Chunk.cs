@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace TerrainGeneration
+namespace IsosurfaceGeneration
 {
     public class Chunk : MonoBehaviour
     {
@@ -45,7 +45,8 @@ namespace TerrainGeneration
             m_MeshRenderer = gameObject.AddComponent<MeshRenderer>();
             m_Collider = gameObject.AddComponent<MeshCollider>();
 
-            gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
+            //gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
+            gameObject.hideFlags = HideFlags.DontSave;
         }
 
         public void Destroy()
@@ -80,6 +81,8 @@ namespace TerrainGeneration
         }
 
 #if UNITY_EDITOR
+        // This will crash your computer.
+        /*
         void OnDrawGizmos()
         {
             Gizmos.matrix = transform.localToWorldMatrix;
@@ -97,13 +100,14 @@ namespace TerrainGeneration
                 }
             }
         }
+        */
 
         public void DrawBoundsGizmo()
         {
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(1, 1, 1, 0.5f);
 
-            Vector3 dimentions = m_DensityMap.sizeInWorld;
+            Vector3 dimentions = m_DensityMap.sizeInWorld - Vector3.one;
             Gizmos.DrawWireCube(dimentions / 2.0f, dimentions * 0.999f);
         }
 #endif

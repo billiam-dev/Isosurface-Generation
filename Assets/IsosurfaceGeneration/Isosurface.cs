@@ -1,23 +1,29 @@
 using System;
 using System.Collections.Generic;
-using Unity.Collections;
-using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
-using static UnityEngine.InputManagerEntry;
 
-namespace TerrainGeneration
+namespace IsosurfaceGeneration
 {
-    public partial class ProceduralTerrain : MonoBehaviour
+    public partial class Isosurface : MonoBehaviour
     {
         #region Properties
+        public enum IcosurfaceGenerationMethod
+        {
+            MarchingCubes,
+            SurfaceNets
+        }
+
         /// <summary>
-        /// Dimentions of the terrain in chunks. Will be applied upon regenerating chunks.
+        /// Which algorithm to use when constructing the icosurface. For performance comparison.
         /// </summary>
-        [Tooltip("Dimentions of the terrain in chunks. Will be applied upon regenerating chunks.")]
+        [Tooltip("Which algorithm to use when constructing the icosurface. For performance comparison.")]
+        public IcosurfaceGenerationMethod MeshingMethod;
+
+        /// <summary>
+        /// Dimentions of the isosurface in chunks. Will be applied upon regenerating chunks.
+        /// </summary>
+        [Tooltip("Dimentions of the isosurface in chunks. Will be applied upon regenerating chunks.")]
         public int3 Dimentions = new(2, 2, 2);
 
         /// <summary>
@@ -30,7 +36,7 @@ namespace TerrainGeneration
         /// When enabled, the world is filled in by default and subtractive brushes must be used to carve holes.
         /// </summary>
         [Tooltip("When enabled, the world is filled in by default and subtractive brushes must be used to carve holes.")]
-        public bool InvertTerrain = false;
+        public bool InvertSurface = false;
 
         public Material Material;
         #endregion
@@ -75,16 +81,16 @@ namespace TerrainGeneration
         }
 
         /// <summary>
-        /// Apply a shape array to all chunks. For total terrain regeneration.
+        /// Apply a shape array to all chunks. For total surface regeneration.
         /// </summary>
-        public void Recompute(TerrainShape[] shapeQueue)
+        public void Recompute(Shape[] shapeQueue)
         {
-            float baseDensity = InvertTerrain ? -32 : 32;
+            float baseDensity = InvertSurface ? -32 : 32;
 
             for (int i = 0; i < m_Chunks.Length; i++)
             {
                 m_Chunks[i].DensityMap.FillDensityMap(baseDensity);
-                foreach (TerrainShape shape in shapeQueue)
+                foreach (Shape shape in shapeQueue)
                     m_Chunks[i].DensityMap.ApplyShape(shape);
             }
 
@@ -92,9 +98,9 @@ namespace TerrainGeneration
         }
 
         /// <summary>
-        /// Apply a shape to the terrain at a given position.
+        /// Apply a shape at the given position.
         /// </summary>
-        public void ApplyShapeAtPosition(TerrainShape shape, Vector3 positionWS)
+        public void ApplyShapeAtPosition(Shape shape, Vector3 positionWS)
         {
             ComputeIndices(WorldPositionToIndex(positionWS), out int3 chunkIndex, out _);
             List<int> updateChunks = new();
@@ -126,36 +132,28 @@ namespace TerrainGeneration
 
         void UpdateChunk(int index)
         {
-            Mesh mesh = MakeMesh(m_Chunks[index].DensityMap, WrapChunkIndex(index) * k_ChunkSize);
+            Mesh mesh;
+            switch (MeshingMethod)
+            {
+                case IcosurfaceGenerationMethod.MarchingCubes:
+                    mesh = MakeMesh_MarchingCubes(m_Chunks[index].DensityMap, WrapChunkIndex(index) * k_ChunkSize);
+                    break;
+
+                case IcosurfaceGenerationMethod.SurfaceNets:
+                    mesh = MakeMesh_SurfaceNets(m_Chunks[index].DensityMap, WrapChunkIndex(index) * k_ChunkSize);
+                    break;
+
+                default:
+                    mesh = new()
+                    {
+                        name = "How did u fuk that up?"
+                    };
+                    break;
+                    
+            }
+            
             m_Chunks[index].SetMesh(mesh);
             m_Chunks[index].SetMaterial(Material);
-
-            /*
-            int numVoxels = m_ChunkDimentions.i * m_ChunkDimentions.sizeY * m_ChunkDimentions.i * k_ChunkSize;
-
-            NativeList<float3> vertices = new();
-            NativeList<float3> normals = new();
-            NativeList<ushort> triangles = new();
-
-            BuildMeshJob meshJob = new BuildMeshJob()
-            {
-                vertices = vertices,
-                normals = normals,
-                triangles = triangles,
-                terrain = this
-            };
-
-            JobHandle dependencyJobHandle = default;
-            JobHandle meshJobHandle = meshJob.ScheduleParallelByRef(numVoxels * 5, 64, dependencyJobHandle);
-            meshJobHandle.Complete();
-
-            m_Chunks[i, sizeY, i].SetMesh(mesh);
-            m_Chunks[i, sizeY, i].SetMaterial(Material);
-
-            vertices.Dispose();
-            normals.Dispose();
-            triangles.Dispose();
-            */
         }
 
         /// <summary>
@@ -168,7 +166,7 @@ namespace TerrainGeneration
 
 #if UNITY_EDITOR
         /// <summary>
-        /// From a world space position, compute the terrain-space wrappedIndex and then break it down into a chunk wrappedIndex and a cell wrappedIndex within that chunk.
+        /// From a world space position, compute the object-space wrappedIndex and then break it down into a chunk wrappedIndex and a cell wrappedIndex within that chunk.
         /// For debugging.
         /// </summary>
         public void ComputeIndices(Vector3 positionWS, out int3 chunkIndex, out int3 densityIndex)
@@ -196,7 +194,7 @@ namespace TerrainGeneration
 
         void ComputeIndices(int3 index, out int3 chunkIndex, out int3 cellIndex)
         {
-            // Clamp distance to terrain bounds.
+            // Clamp distance to surface bounds.
             float x = Mathf.Clamp(index.x, 0, (m_ChunkDimentions.x * k_ChunkSize) - 0.001f);
             float y = Mathf.Clamp(index.y, 0, (m_ChunkDimentions.y * k_ChunkSize) - 0.001f);
             float z = Mathf.Clamp(index.z, 0, (m_ChunkDimentions.z * k_ChunkSize) - 0.001f);
@@ -242,7 +240,7 @@ namespace TerrainGeneration
 #endif
     }
 
-    public struct TerrainShape
+    public struct Shape
     {
         public Matrix4x4 matrix;
         public ShapeFuncion shapeID;

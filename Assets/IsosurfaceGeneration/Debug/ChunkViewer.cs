@@ -3,12 +3,12 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
-namespace TerrainGeneration.Debugging
+namespace IsosurfaceGeneration.Debugging
 {
     [ExecuteInEditMode]
-    public class TerrainDebugger : MonoBehaviour
+    public class ChunkViewer : MonoBehaviour
     {
-        public ProceduralTerrain Terrain;
+        public Isosurface Surface;
         GUIStyle m_Style;
 
         void OnEnable()
@@ -25,20 +25,20 @@ namespace TerrainGeneration.Debugging
 
         void OnDrawGizmos()
         {
-            if (!Terrain)
+            if (!Surface || !Surface.IsGenerated)
                 return;
 
             Gizmos.color = new Color(1, 0, 0, 0.5f);
             Gizmos.DrawSphere(transform.position, 0.1f);
 
-            Vector3 pos = Terrain.transform.InverseTransformPoint(transform.position);
-            Terrain.ComputeIndices(pos, out int3 chunkIndex, out int3 densityIndex);
-            Terrain.GetChunk(chunkIndex).DrawBoundsGizmo();
+            Vector3 pos = Surface.transform.InverseTransformPoint(transform.position);
+            Surface.ComputeIndices(pos, out int3 chunkIndex, out int3 densityIndex);
+            Surface.GetChunk(chunkIndex).DrawBoundsGizmo();
 
             string label = string.Empty;
             label += $"Chunk: {chunkIndex.x}, {chunkIndex.y}, {chunkIndex.z}";
             label += $"\nInterchunk: {densityIndex.x}, {densityIndex.y}, {densityIndex.z}";
-            label += $"\nDensity: {Terrain.SampleDensity(pos)}";
+            label += $"\nDensity: {Surface.SampleDensity(pos)}";
 
             Handles.Label(transform.position, label, m_Style);
         }

@@ -1,13 +1,13 @@
 using UnityEngine;
 
-namespace TerrainGeneration.RealtimeEditor
+namespace IsosurfaceGeneration.RealtimeEditor
 {
     public class ShapeBrush : MonoBehaviour
     {
         /// <summary>
-        /// Which shape function to use when applied to a terrain.
+        /// Which shape function to use when applied to a surface.
         /// </summary>
-        [Tooltip("Which shape function to use when applied to a terrain.")]
+        [Tooltip("Which shape function to use when applied to a surface.")]
         public ShapeFuncion Shape;
 
         /// <summary>
@@ -54,9 +54,9 @@ namespace TerrainGeneration.RealtimeEditor
         bool m_PropertyChanged;
         int m_OrderInQueue = -1;
 
-        public TerrainShape GetShapeProperties()
+        public Shape GetShapeProperties()
         {
-            return new TerrainShape()
+            return new Shape()
             {
                 matrix = Matrix4x4.TRS(transform.localPosition, transform.localRotation, transform.localScale).inverse,
                 shapeID = Shape,

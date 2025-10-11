@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace TerrainGeneration
+namespace IsosurfaceGeneration
 {
     public struct DensityMap
     {
@@ -13,7 +13,7 @@ namespace TerrainGeneration
 
         public Vector3 sizeInWorld => new(sizeX, sizeY, sizeZ);
 
-        int3 chunkOriginIndex; // The index in the terrain-space density field where this chunk begins.
+        int3 chunkOriginIndex; // The index in the object-space density field where this chunk begins.
 
         public DensityMap(int3 chunkIndex, int size)
         {
@@ -33,9 +33,9 @@ namespace TerrainGeneration
         }
 
         /// <summary>
-        /// Apply a terrain shape to a given chunk.
+        /// Apply a shape to a given chunk.
         /// </summary>
-        public void ApplyShape(TerrainShape shape)
+        public void ApplyShape(Shape shape)
         {
             for (int x = 0; x < densityArray.GetLength(0); x++)
                 for (int y = 0; y < densityArray.GetLength(1); y++)
@@ -43,7 +43,7 @@ namespace TerrainGeneration
                         ApplyShape(shape, x, y, z);
         }
 
-        void ApplyShape(TerrainShape shape, int x, int y, int z)
+        void ApplyShape(Shape shape, int x, int y, int z)
         {
             int3 index = new int3(x, y, z) + chunkOriginIndex;
             Vector3 samplePos = shape.matrix.MultiplyPoint(new Vector3(index.x, index.y, index.z));

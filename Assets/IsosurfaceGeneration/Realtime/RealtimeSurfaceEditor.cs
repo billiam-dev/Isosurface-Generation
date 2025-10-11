@@ -1,38 +1,38 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace TerrainGeneration.RealtimeEditor
+namespace IsosurfaceGeneration.RealtimeEditor
 {
     /// <summary>
-    /// Allows for realtime editing of terrains via Shape Brushes.
+    /// Allows for realtime editing of isosurfaces via Shape Brushes.
     /// </summary>
     [ExecuteInEditMode]
-    [RequireComponent(typeof(ProceduralTerrain))]
-    public class RealtimeTerrainEditor : MonoBehaviour
+    [RequireComponent(typeof(Isosurface))]
+    public class RealtimeSurfaceEditor : MonoBehaviour
     {
         public ShapeBrush[] Brushes;
-        ProceduralTerrain m_Terrain;
+        Isosurface m_Isosurface;
         int m_NumBrushes;
 
         void OnEnable()
         {
             EditorApplication.update += EvaluatePropertyChanged;
 
-            m_Terrain = GetComponent<ProceduralTerrain>();
-            if (!m_Terrain.IsGenerated)
-                m_Terrain.Generate();
+            m_Isosurface = GetComponent<Isosurface>();
+            if (!m_Isosurface.IsGenerated)
+                m_Isosurface.Generate();
 
-            TerrainShape[] shapeQueue = new TerrainShape[Brushes.Length];
+            Shape[] shapeQueue = new Shape[Brushes.Length];
             for (int i = 0; i < Brushes.Length; i++)
                 shapeQueue[i] = Brushes[i].GetShapeProperties();
 
-            m_Terrain.Recompute(shapeQueue);
+            m_Isosurface.Recompute(shapeQueue);
         }
 
         void OnDisable()
         {
             EditorApplication.update -= EvaluatePropertyChanged;
-            m_Terrain.Destroy();
+            m_Isosurface.Destroy();
         }
 
         void Update()
@@ -46,8 +46,8 @@ namespace TerrainGeneration.RealtimeEditor
             Brushes = GetComponentsInChildren<ShapeBrush>();
 
             // Initialize shape queue.
-            TerrainShape[] shapeQueue = new TerrainShape[Brushes.Length];
-            bool recalculateTerrain = false;
+            Shape[] shapeQueue = new Shape[Brushes.Length];
+            bool recalculateSurface = false;
             
             // Evaluate changes in brushes.
             for (int i = 0; i < Brushes.Length; i++)
@@ -58,14 +58,14 @@ namespace TerrainGeneration.RealtimeEditor
                 if (shaper.OrderInQueue != i)
                 {
                     shaper.OrderInQueue = i;
-                    recalculateTerrain = true;
+                    recalculateSurface = true;
                 }
 
                 // Check property changed.
                 if (shaper.PropertyChanged)
                 {
                     shaper.PropertyChanged = false;
-                    recalculateTerrain = true;
+                    recalculateSurface = true;
                 }
 
                 // Add brush to shape queue.
@@ -76,19 +76,19 @@ namespace TerrainGeneration.RealtimeEditor
             if (m_NumBrushes != shapeQueue.Length)
             {
                 m_NumBrushes = shapeQueue.Length;
-                recalculateTerrain = true;
+                recalculateSurface = true;
             }
 
-            // Evaluate changes in the terrain properties.
-            if (m_Terrain.PropertyChanged)
+            // Evaluate changes in the surface properties.
+            if (m_Isosurface.PropertyChanged)
             {
-                recalculateTerrain = true;
-                m_Terrain.PropertyChanged = false;
+                recalculateSurface = true;
+                m_Isosurface.PropertyChanged = false;
             }
 
-            // If a change was detected, recompute the terrain.
-            if (recalculateTerrain)
-                m_Terrain.Recompute(shapeQueue);
+            // If a change was detected, recompute the surface.
+            if (recalculateSurface)
+                m_Isosurface.Recompute(shapeQueue);
         }
     }
 }

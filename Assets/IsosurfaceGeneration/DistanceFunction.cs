@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace TerrainGeneration
+namespace IsosurfaceGeneration
 {
     public static class DistanceFunction
     {

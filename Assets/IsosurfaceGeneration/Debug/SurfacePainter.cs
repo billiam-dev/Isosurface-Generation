@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace TerrainGeneration.Debugging
+namespace IsosurfaceGeneration.Debugging
 {
     [RequireComponent(typeof(Camera))]
-    public class TerrainPainter : MonoBehaviour
+    public class SurfacePainter : MonoBehaviour
     {
         public enum InputMode
         {
@@ -30,7 +30,7 @@ namespace TerrainGeneration.Debugging
         {
             m_LastInputTime = float.NegativeInfinity;
 
-            m_Pointer = new GameObject("Terrain Paint Pointer");
+            m_Pointer = new GameObject("Paint Pointer");
             MeshFilter meshFilter = m_Pointer.AddComponent<MeshFilter>();
             MeshRenderer meshRenderer = m_Pointer.AddComponent<MeshRenderer>();
             meshFilter.sharedMesh = m_PointerMesh;
@@ -44,26 +44,26 @@ namespace TerrainGeneration.Debugging
 
         void Update()
         {
-            GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint);
+            GetSurfaceAtMousePosition(out Isosurface surface, out Vector3 hitPoint);
             m_Pointer.transform.position = hitPoint;
 
-            if (terrain && Time.time > m_LastInputTime + 0.1f)
+            if (surface && Time.time > m_LastInputTime + 0.1f)
             {
                 if (Input.GetMouseButton(0))
                 {
-                    ApplyTerrainShape(terrain, hitPoint, BlendMode.Additive);
+                    ApplyShape(surface, hitPoint, BlendMode.Additive);
                 }
 
                 if (Input.GetMouseButton(1))
                 {
-                    ApplyTerrainShape(terrain, hitPoint, BlendMode.Subtractive);
+                    ApplyShape(surface, hitPoint, BlendMode.Subtractive);
                 }
             }
         }
 
-        void ApplyTerrainShape(ProceduralTerrain terrain, Vector3 position, BlendMode blendMode)
+        void ApplyShape(Isosurface surface, Vector3 position, BlendMode blendMode)
         {
-            TerrainShape shape = new()
+            Shape shape = new()
             {
                 matrix = Matrix4x4.TRS(position, Quaternion.identity, Vector3.one).inverse,
                 shapeID = ShapeFuncion.Sphere,
@@ -72,12 +72,12 @@ namespace TerrainGeneration.Debugging
                 dimention1 = 1
             };
 
-            terrain.ApplyShapeAtPosition(shape, position);
+            surface.ApplyShapeAtPosition(shape, position);
 
             m_LastInputTime = Time.time;
         }
 
-        void GetTerrainAtMousePosition(out ProceduralTerrain terrain, out Vector3 hitPoint)
+        void GetSurfaceAtMousePosition(out Isosurface surface, out Vector3 hitPoint)
         {
             Ray ray = new();
             
@@ -97,12 +97,12 @@ namespace TerrainGeneration.Debugging
 
             if (hitInfo.collider)
             {
-                terrain = hitInfo.collider.GetComponentInParent<ProceduralTerrain>();
+                surface = hitInfo.collider.GetComponentInParent<Isosurface>();
                 hitPoint = hitInfo.point;
                 return;
             }
 
-            terrain = null;
+            surface = null;
             hitPoint = Vector3.zero;
         }
     }
