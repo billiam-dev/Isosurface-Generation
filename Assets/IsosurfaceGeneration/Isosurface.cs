@@ -85,7 +85,7 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void Recompute(Shape[] shapeQueue)
         {
-            float baseDensity = InvertSurface ? -32 : 32;
+            float baseDensity = InvertSurface ? 32 : -32;
 
             for (int i = 0; i < m_Chunks.Length; i++)
             {

@@ -59,11 +59,11 @@ namespace IsosurfaceGeneration
             switch (shape.blendMode)
             {
                 case BlendMode.Additive:
-                    densityArray[x, y, z] = SmoothMin(distance, densityArray[x, y, z], shape.sharpness);
+                    densityArray[x, y, z] = SmoothMax(-distance, densityArray[x, y, z], shape.sharpness);
                     break;
 
                 case BlendMode.Subtractive:
-                    densityArray[x, y, z] = SmoothMax(-distance, densityArray[x, y, z], shape.sharpness);
+                    densityArray[x, y, z] = SmoothMin(distance, densityArray[x, y, z], shape.sharpness);
                     break;
             }    
         }

@@ -19,60 +19,60 @@ namespace IsosurfaceGeneration
             int triangleIndex = 0;
             Dictionary<int2, int> vertexIndexMap = new();
 
+            float3 CalculateNormal(int3 index)
+            {
+                int3 samplePos = chunkOriginIndex + index;
+
+                int3 offsetX = new(1, 0, 0);
+                int3 offsetY = new(0, 1, 0);
+                int3 offsetZ = new(0, 0, 1);
+
+                float dx = surface.SampleDensity(samplePos - offsetX) - surface.SampleDensity(samplePos + offsetX);
+                float dy = surface.SampleDensity(samplePos - offsetY) - surface.SampleDensity(samplePos + offsetY);
+                float dz = surface.SampleDensity(samplePos - offsetZ) - surface.SampleDensity(samplePos + offsetZ);
+
+                return new float3(dx, dy, dz);
+            }
+
+            void GetOrMakeVertex(int3 coordA, int3 coordB)
+            {
+                // Get density values.
+                float densityA = densityMap.Sample(coordA);
+                float densityB = densityMap.Sample(coordB);
+
+                // Since the cell sizeInWorld is 1, the index doubles as the position, neat.
+                float3 posA = new(coordA.x, coordA.y, coordA.z);
+                float3 posB = new(coordB.x, coordB.y, coordB.z);
+
+                // Find interpolated position.
+                float t = (surface.IsoLevel - densityA) / (densityB - densityA);
+                float3 position = posA + t * (posB - posA);
+
+                // Normal
+                float3 normalA = CalculateNormal(coordA);
+                float3 normalB = CalculateNormal(coordB);
+                float3 normal = normalA + t * (normalB - normalA);
+
+                // ID (for de-duplication)
+                int indexA = densityMap.FlattenIndex(coordA);
+                int indexB = densityMap.FlattenIndex(coordB);
+                int2 id = new(Mathf.Min(indexA, indexB), Mathf.Max(indexA, indexB));
+
+                if (vertexIndexMap.TryGetValue(id, out int sharedVertexIndex))
+                {
+                    triangles.Add(sharedVertexIndex);
+                }
+                else
+                {
+                    vertexIndexMap.Add(id, triangleIndex);
+                    vertices.Add(position);
+                    normals.Add(normal);
+                    triangles.Add(triangleIndex++);
+                }
+            }
+
             void MarchCell(int x, int y, int z)
             {
-                Vector3 CalculateNormal(int3 index)
-                {
-                    int3 samplePos = chunkOriginIndex + index;
-
-                    int3 offsetX = new(1, 0, 0);
-                    int3 offsetY = new(0, 1, 0);
-                    int3 offsetZ = new(0, 0, 1);
-
-                    float dx = surface.SampleDensity(samplePos + offsetX) - surface.SampleDensity(samplePos - offsetX);
-                    float dy = surface.SampleDensity(samplePos + offsetY) - surface.SampleDensity(samplePos - offsetY);
-                    float dz = surface.SampleDensity(samplePos + offsetZ) - surface.SampleDensity(samplePos - offsetZ);
-
-                    return new Vector3(dx, dy, dz).normalized;
-                }
-
-                void GetOrMakeVertex(int3 coordA, int3 coordB)
-                {
-                    // Get density values.
-                    float densityA = densityMap.Sample(coordA);
-                    float densityB = densityMap.Sample(coordB);
-
-                    // Since the cell sizeInWorld is 1, the index doubles as the position, neat.
-                    float3 posA = new(coordA.x, coordA.y, coordA.z);
-                    float3 posB = new(coordB.x, coordB.y, coordB.z);
-
-                    // Find interpolated position.
-                    float t = (surface.IsoLevel - densityA) / (densityB - densityA);
-                    float3 position = posA + t * (posB - posA);
-
-                    // Normal
-                    float3 normalA = CalculateNormal(coordA);
-                    float3 normalB = CalculateNormal(coordB);
-                    float3 normal = Vector3.Normalize(normalA + t * (normalB - normalA));
-
-                    // ID (for de-duplication)
-                    int indexA = densityMap.FlattenIndex(coordA);
-                    int indexB = densityMap.FlattenIndex(coordB);
-                    int2 id = new(Mathf.Min(indexA, indexB), Mathf.Max(indexA, indexB));
-
-                    if (vertexIndexMap.TryGetValue(id, out int sharedVertexIndex))
-                    {
-                        triangles.Add(sharedVertexIndex);
-                    }
-                    else
-                    {
-                        vertexIndexMap.Add(id, triangleIndex);
-                        vertices.Add(position);
-                        normals.Add(normal);
-                        triangles.Add(triangleIndex++);
-                    }
-                }
-
                 // Calculate coordinates of each corner of the current cell.
                 int3 index = new(x, y, z);
                 int3[] cornerCoords = new int3[8] {
@@ -90,7 +90,7 @@ namespace IsosurfaceGeneration
                 // The value is used to look up the edge table, which indicates which edges of the cube the surface passes through.
                 int cubeConfiguration = 0;
                 for (int i = 0; i < 8; i++)
-                    if (densityMap.Sample(cornerCoords[i]) < surface.IsoLevel)
+                    if (densityMap.Sample(cornerCoords[i]) > surface.IsoLevel)
                         cubeConfiguration |= 1 << i;
 
                 // Exit early if there are no intersections, index.e. the cube is full or empty.

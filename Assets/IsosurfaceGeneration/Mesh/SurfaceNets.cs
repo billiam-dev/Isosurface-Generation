@@ -18,18 +18,23 @@ public static class SurfaceNets
         int triangleIndex = 0;
         Dictionary<int3, int> vertexIndexMap = new();
 
-        Vector3 ComputeNormal(int3 index)
+        Vector3 Int3ToVector3(int3 i)
+        {
+            return new Vector3(i.x, i.y, i.z);
+        }
+
+        Vector3 CalculateNormal(int3 index)
         {
             int3 samplePos = chunkOriginIndex + index;
 
-            float dx = surface.SampleDensity(samplePos + k_Axis[0]) - surface.SampleDensity(samplePos);
-            float dy = surface.SampleDensity(samplePos + k_Axis[1]) - surface.SampleDensity(samplePos);
-            float dz = surface.SampleDensity(samplePos + k_Axis[2]) - surface.SampleDensity(samplePos);
+            float dx = surface.SampleDensity(samplePos - k_Axis[0]) - surface.SampleDensity(samplePos + k_Axis[0]);
+            float dy = surface.SampleDensity(samplePos - k_Axis[1]) - surface.SampleDensity(samplePos + k_Axis[1]);
+            float dz = surface.SampleDensity(samplePos - k_Axis[2]) - surface.SampleDensity(samplePos + k_Axis[2]);
 
             return new Vector3(dx, dy, dz).normalized;
         }
 
-        Vector3 ComputeSurfacePosition(int3 index)
+        Vector3 CalculateSurfacePosition(int3 index)
         {
             Vector3 position = Vector3.zero;
             int surfaceEdgeCount = 0;
@@ -38,15 +43,15 @@ public static class SurfaceNets
             {
                 int3[] edgeOffsets = k_Edges[i];
 
-                int3 posA = index + edgeOffsets[0];
-                float densityA = surface.SampleDensity(chunkOriginIndex + posA);
+                Vector3 positionA = Int3ToVector3(index + edgeOffsets[0]);
+                Vector3 positionB = Int3ToVector3(index + edgeOffsets[1]);
 
-                int3 posB = index + edgeOffsets[1];
-                float densityB = surface.SampleDensity(chunkOriginIndex + posB);
+                float densityA = surface.SampleDensity(chunkOriginIndex + index + edgeOffsets[0]);
+                float densityB = surface.SampleDensity(chunkOriginIndex + index + edgeOffsets[1]);
 
                 if (densityA * densityB <= 0)
                 {
-                    position += Vector3.Lerp(new Vector3(posA.x, posA.y, posA.z), new Vector3(posB.x, posB.y, posB.z), Mathf.Abs(densityA) / (Mathf.Abs(densityA) + Mathf.Abs(densityB)));
+                    position += Vector3.Lerp(positionA, positionB, Mathf.Abs(densityA) / (Mathf.Abs(densityA) + Mathf.Abs(densityB)));
                     surfaceEdgeCount++;
                 }
             }
@@ -66,13 +71,13 @@ public static class SurfaceNets
             else
             {
                 vertexIndexMap.Add(index, triangleIndex);
-                vertices.Add(ComputeSurfacePosition(index));
-                normals.Add(ComputeNormal(index));
+                vertices.Add(CalculateSurfacePosition(index));
+                normals.Add(CalculateNormal(index));
                 triangles.Add(triangleIndex++);
             }
         }
 
-        void MakeQuad(int3 index, int axisIndex, bool reversed)
+        void MakeQuad(int3 index, int axisIndex)
         {
             int3[] points = new int3[4]
             {
@@ -82,29 +87,32 @@ public static class SurfaceNets
                     index + k_QuadPoints[axisIndex][3]
             };
 
-            int3 axis = k_Axis[axisIndex];
-            Vector3 normal = new(axis.x, axis.y, axis.z);
+            GetOrMakeVertex(points[0]);
+            GetOrMakeVertex(points[1]);
+            GetOrMakeVertex(points[2]);
 
-            if (reversed)
+            GetOrMakeVertex(points[2]);
+            GetOrMakeVertex(points[3]);
+            GetOrMakeVertex(points[0]);
+        }
+
+        void MakeQuad_Reversed(int3 index, int axisIndex)
+        {
+            int3[] points = new int3[4]
             {
-                GetOrMakeVertex(points[0]);
-                GetOrMakeVertex(points[1]);
-                GetOrMakeVertex(points[2]);
+                    index + k_QuadPoints[axisIndex][0],
+                    index + k_QuadPoints[axisIndex][1],
+                    index + k_QuadPoints[axisIndex][2],
+                    index + k_QuadPoints[axisIndex][3]
+            };
 
-                GetOrMakeVertex(points[2]);
-                GetOrMakeVertex(points[3]);
-                GetOrMakeVertex(points[0]);
-            }
-            else
-            {
-                GetOrMakeVertex(points[2]);
-                GetOrMakeVertex(points[1]);
-                GetOrMakeVertex(points[0]);
+            GetOrMakeVertex(points[2]);
+            GetOrMakeVertex(points[1]);
+            GetOrMakeVertex(points[0]);
 
-                GetOrMakeVertex(points[0]);
-                GetOrMakeVertex(points[3]);
-                GetOrMakeVertex(points[2]);
-            }
+            GetOrMakeVertex(points[0]);
+            GetOrMakeVertex(points[3]);
+            GetOrMakeVertex(points[2]);
         }
 
         void MarchCell(int3 index)
@@ -117,9 +125,9 @@ public static class SurfaceNets
                 float d2 = densityMap.Sample(index + k_Axis[i]);
 
                 if (d1 < 0 && d2 >= 0)
-                    MakeQuad(index, i, false);
+                    MakeQuad(index, i);
                 else if (d1 >= 0 && d2 < 0)
-                    MakeQuad(index, i, true);
+                    MakeQuad_Reversed(index, i);
             }
         }
 
