@@ -1,5 +1,9 @@
+using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
+using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 namespace IsosurfaceGeneration
 {
@@ -30,7 +34,7 @@ namespace IsosurfaceGeneration
         const float k_RenderDistance = 128.0f;
 
         /// <summary>
-        /// Create a new chunk at the given sizeX, sizeY, sizeZ chunk index.
+        /// Create a new chunk object at the given index.
         /// </summary>
         public static Chunk New(int3 chunkIndex, int chunkSize)
         {
@@ -48,6 +52,11 @@ namespace IsosurfaceGeneration
             m_MeshRenderer = gameObject.AddComponent<MeshRenderer>();
             m_Collider = gameObject.AddComponent<MeshCollider>();
 
+            m_Mesh = new Mesh();
+
+            m_MeshFilter.sharedMesh = m_Mesh;
+            m_Collider.sharedMesh = m_Mesh;
+
             gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
         }
 
@@ -56,18 +65,64 @@ namespace IsosurfaceGeneration
             DestroyImmediate(gameObject);
         }
 
-        public void SetMesh(Mesh mesh)
+        /// <summary>
+        /// Assign mesh data from vertices, normals and indices list.
+        /// </summary>
+        public void SetMesh(List<Vector3> vertices, List<Vector3> normals, List<int> triangles)
         {
-            m_Mesh = mesh;
-            m_MeshFilter.sharedMesh = mesh;
-            m_Collider.sharedMesh = mesh;
+            m_Mesh.Clear();
+
+            if (vertices.Count > 2)
+            {
+                m_Mesh.SetVertices(vertices);
+                m_Mesh.SetTriangles(triangles, 0, true);
+                m_Mesh.SetNormals(normals);
+            }
         }
 
+        const MeshUpdateFlags updateFlags =
+              MeshUpdateFlags.DontNotifyMeshUsers |
+              MeshUpdateFlags.DontRecalculateBounds |
+              MeshUpdateFlags.DontResetBoneBounds |
+              MeshUpdateFlags.DontValidateIndices;
+
+        /// <summary>
+        /// Assign mesh data from a marching cubes mesher job.
+        /// </summary>
+        public void SetMesh(MarchingCubesMesherJob mesher)
+        {
+            var vertices = mesher.vertices.ToArray(Allocator.Temp);
+            var indices = mesher.indices.ToArray(Allocator.Temp);
+
+            if (mesher.vertices.Length > 2)
+            {
+                m_Mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt32);
+                m_Mesh.SetVertexBufferParams(vertices.Length, Vertex.Format);
+
+                SubMeshDescriptor subMeshDescriptor = new(0, indices.Length, MeshTopology.Triangles);
+                m_Mesh.subMeshCount = 1;
+                m_Mesh.SetSubMesh(0, subMeshDescriptor, updateFlags);
+
+                m_Mesh.SetIndexBufferData(indices, 0, 0, indices.Length, updateFlags);
+                m_Mesh.SetVertexBufferData(vertices, 0, 0, vertices.Length, 0, updateFlags);
+            }
+            else
+            {
+                m_Mesh.Clear();
+            }
+        }
+
+        /// <summary>
+        /// Set the chunk material.
+        /// </summary>
         public void SetMaterial(Material material)
         {
             m_MeshRenderer.sharedMaterial = material;
         }
 
+        /// <summary>
+        /// Whether or not the chunk is within the camera's view frustum, and within the preset render distance.
+        /// </summary>
         public bool InViewFrustum(Camera camera)
         {
             Vector3 dimentions = m_Bounds;

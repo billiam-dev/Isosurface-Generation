@@ -1,131 +1,39 @@
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 // Resources:
 // https://developer.nvidia.com/gpugems/gpugems3/part-i-geometry/chapter-1-generating-complex-procedural-terrains-using-gpu
 // https://github.com/Fobri/Terraxel-Unity
+// https://eetumaenpaa.fi/blog/marching-cubes-optimizations-in-unity/#job-system
 
 namespace IsosurfaceGeneration
 {
-    public static class MarchingCubes
+    #region Single Threaded Mesher
+    public struct MarchingCubesMesher
     {
-        public static Mesh MakeMesh(Isosurface surface, DensityMap densityMap, int3 chunkOriginIndex)
+        public Isosurface surface;
+        public DensityMap densityMap;
+        public int3 chunkOriginIndex;
+
+        public List<Vector3> vertices;
+        public List<Vector3> normals;
+        public List<int> triangles;
+
+        int triangleIndex;
+        Dictionary<int2, int> vertexIndexMap;
+
+        public void Execute()
         {
-            List<Vector3> vertices = new();
-            List<Vector3> normals = new();
-            List<int> triangles = new();
+            triangleIndex = 0;
+            vertexIndexMap = new();
 
-            int triangleIndex = 0;
-            Dictionary<int2, int> vertexIndexMap = new();
-
-            float3 CalculateNormal(int3 index)
-            {
-                int3 samplePos = chunkOriginIndex + index;
-
-                int3 offsetX = new(1, 0, 0);
-                int3 offsetY = new(0, 1, 0);
-                int3 offsetZ = new(0, 0, 1);
-
-                float dx = surface.SampleDensity(samplePos - offsetX) - surface.SampleDensity(samplePos + offsetX);
-                float dy = surface.SampleDensity(samplePos - offsetY) - surface.SampleDensity(samplePos + offsetY);
-                float dz = surface.SampleDensity(samplePos - offsetZ) - surface.SampleDensity(samplePos + offsetZ);
-
-                return new float3(dx, dy, dz);
-            }
-
-            void GetOrMakeVertex(int3 coordA, int3 coordB)
-            {
-                // Get density values.
-                float densityA = densityMap.Sample(coordA);
-                float densityB = densityMap.Sample(coordB);
-
-                // Since the cell sizeInWorld is 1, the index doubles as the position, neat.
-                float3 posA = new(coordA.x, coordA.y, coordA.z);
-                float3 posB = new(coordB.x, coordB.y, coordB.z);
-
-                // Find interpolated position.
-                float t = (surface.IsoLevel - densityA) / (densityB - densityA);
-                float3 position = posA + t * (posB - posA);
-
-                // Normal
-                float3 normalA = CalculateNormal(coordA);
-                float3 normalB = CalculateNormal(coordB);
-                float3 normal = normalA + t * (normalB - normalA);
-
-                // ID (for de-duplication)
-                int indexA = densityMap.WrapCellIndex(coordA);
-                int indexB = densityMap.WrapCellIndex(coordB);
-                int2 id = new(Mathf.Min(indexA, indexB), Mathf.Max(indexA, indexB));
-
-                if (vertexIndexMap.TryGetValue(id, out int sharedVertexIndex))
-                {
-                    triangles.Add(sharedVertexIndex);
-                }
-                else
-                {
-                    vertexIndexMap.Add(id, triangleIndex);
-                    vertices.Add(position);
-                    normals.Add(normal);
-                    triangles.Add(triangleIndex++);
-                }
-            }
-
-            void MarchCell(int3 index)
-            {
-                // Calculate coordinates of each corner of the current cell.
-                int3[] cornerCoords = new int3[8]
-                {
-                    index + new int3(0, 0, 0),
-                    index + new int3(1, 0, 0),
-                    index + new int3(1, 0, 1),
-                    index + new int3(0, 0, 1),
-                    index + new int3(0, 1, 0),
-                    index + new int3(1, 1, 0),
-                    index + new int3(1, 1, 1),
-                    index + new int3(0, 1, 1)
-                };
-
-                // Calculate unique index for each cube configuration.
-                // The value is used to look up the edge table, which indicates which edges of the cube the surface passes through.
-                int cubeConfiguration = 0;
-                for (int i = 0; i < 8; i++)
-                    if (densityMap.Sample(cornerCoords[i]) > surface.IsoLevel)
-                        cubeConfiguration |= 1 << i;
-
-                // Exit early if there are no intersections, index.e. the cube is full or empty.
-                if (cubeConfiguration == 0 || cubeConfiguration == 0xff)
-                    return;
-
-                // Create triangles for current cube configuration.
-                int[] edgeIndices = MarchTables.triangulation[cubeConfiguration];
-                for (int i = 0; i < 16; i += 3)
-                {
-                    // If edge index is -1, then no further vertices exist in this configuration.
-                    if (edgeIndices[i] == -1)
-                        break;
-
-                    // Get indices of the two corner points defining the edge that the surface passes through.
-                    // (Do this for each of the three edges we're currently looking at).
-                    int edgeIndexA = edgeIndices[i];
-                    int a0 = MarchTables.cornerIndexAFromEdge[edgeIndexA];
-                    int a1 = MarchTables.cornerIndexBFromEdge[edgeIndexA];
-
-                    int edgeIndexB = edgeIndices[i + 1];
-                    int b0 = MarchTables.cornerIndexAFromEdge[edgeIndexB];
-                    int b1 = MarchTables.cornerIndexBFromEdge[edgeIndexB];
-
-                    int edgeIndexC = edgeIndices[i + 2];
-                    int c0 = MarchTables.cornerIndexAFromEdge[edgeIndexC];
-                    int c1 = MarchTables.cornerIndexBFromEdge[edgeIndexC];
-
-                    GetOrMakeVertex(cornerCoords[a0], cornerCoords[a1]);
-                    GetOrMakeVertex(cornerCoords[b0], cornerCoords[b1]);
-                    GetOrMakeVertex(cornerCoords[c0], cornerCoords[c1]);
-                }
-            }
-
-            // Loop through all cells filling the verticies and triangles lists.
+            // Loop through all cells filling the verticies and indices lists.
             for (int i = 0; i < densityMap.totalPoints; i++)
             {
                 int3 unwrappedIndex = densityMap.UnwrapCellIndex(i);
@@ -138,16 +46,198 @@ namespace IsosurfaceGeneration
 
                 MarchCell(unwrappedIndex);
             }
+        }
 
-            Mesh mesh = new();
-            mesh.SetVertices(vertices);
-            mesh.SetTriangles(triangles, 0, true);
-            mesh.SetNormals(normals);
-            
-            return mesh;
+        void MarchCell(int3 index)
+        {
+            // Calculate coordinates of each corner of the current cell.
+            int3[] cornerCoords = new int3[8]
+            {
+                    index + new int3(0, 0, 0),
+                    index + new int3(1, 0, 0),
+                    index + new int3(1, 0, 1),
+                    index + new int3(0, 0, 1),
+                    index + new int3(0, 1, 0),
+                    index + new int3(1, 1, 0),
+                    index + new int3(1, 1, 1),
+                    index + new int3(0, 1, 1)
+            };
+
+            // Calculate unique index for each cube configuration.
+            // The value is used to look up the edge table, which indicates which edges of the cube the surface passes through.
+            int cubeConfiguration = 0;
+            for (int i = 0; i < 8; i++)
+                if (densityMap.Sample(cornerCoords[i]) > surface.IsoLevel)
+                    cubeConfiguration |= 1 << i;
+
+            // Exit early if there are no intersections, i.e. the cube is full or empty.
+            if (cubeConfiguration == 0 || cubeConfiguration == 0xff)
+                return;
+
+            // Create indices for current cube configuration.
+            int[] edgeIndices = MarchTables.triangulation[cubeConfiguration];
+            for (int i = 0; i < 16; i += 3)
+            {
+                // If edge index is -1, then no further vertices exist in this configuration.
+                if (edgeIndices[i] == -1)
+                    break;
+
+                // Get indices of the two corner points defining the edge that the surface passes through.
+                // (Do this for each of the three edges we're currently looking at).
+                int edgeIndexA = edgeIndices[i];
+                int a0 = MarchTables.cornerIndexAFromEdge[edgeIndexA];
+                int a1 = MarchTables.cornerIndexBFromEdge[edgeIndexA];
+
+                int edgeIndexB = edgeIndices[i + 1];
+                int b0 = MarchTables.cornerIndexAFromEdge[edgeIndexB];
+                int b1 = MarchTables.cornerIndexBFromEdge[edgeIndexB];
+
+                int edgeIndexC = edgeIndices[i + 2];
+                int c0 = MarchTables.cornerIndexAFromEdge[edgeIndexC];
+                int c1 = MarchTables.cornerIndexBFromEdge[edgeIndexC];
+
+                GetOrMakeVertex(cornerCoords[a0], cornerCoords[a1]);
+                GetOrMakeVertex(cornerCoords[b0], cornerCoords[b1]);
+                GetOrMakeVertex(cornerCoords[c0], cornerCoords[c1]);
+            }
+        }
+
+        void GetOrMakeVertex(int3 coordA, int3 coordB)
+        {
+            // Get density values.
+            float densityA = densityMap.Sample(coordA);
+            float densityB = densityMap.Sample(coordB);
+
+            // Since the cell sizeInWorld is 1, the index doubles as the position, neat.
+            float3 posA = new(coordA.x, coordA.y, coordA.z);
+            float3 posB = new(coordB.x, coordB.y, coordB.z);
+
+            // Find interpolated position.
+            float t = (surface.IsoLevel - densityA) / (densityB - densityA);
+            float3 position = posA + t * (posB - posA);
+
+            // Normal
+            float3 normalA = CalculateNormal(coordA);
+            float3 normalB = CalculateNormal(coordB);
+            float3 normal = normalA + t * (normalB - normalA);
+
+            // ID (for de-duplication)
+            int indexA = densityMap.WrapCellIndex(coordA);
+            int indexB = densityMap.WrapCellIndex(coordB);
+            int2 id = new(Mathf.Min(indexA, indexB), Mathf.Max(indexA, indexB));
+
+            if (vertexIndexMap.TryGetValue(id, out int sharedVertexIndex))
+            {
+                triangles.Add(sharedVertexIndex);
+            }
+            else
+            {
+                vertexIndexMap.Add(id, triangleIndex);
+                vertices.Add(position);
+                normals.Add(normal);
+                triangles.Add(triangleIndex++);
+            }
+        }
+
+        float3 CalculateNormal(int3 index)
+        {
+            int3 samplePos = chunkOriginIndex + index;
+
+            int3 offsetX = new(1, 0, 0);
+            int3 offsetY = new(0, 1, 0);
+            int3 offsetZ = new(0, 0, 1);
+
+            float dx = surface.SampleDensity(samplePos - offsetX) - surface.SampleDensity(samplePos + offsetX);
+            float dy = surface.SampleDensity(samplePos - offsetY) - surface.SampleDensity(samplePos + offsetY);
+            float dz = surface.SampleDensity(samplePos - offsetZ) - surface.SampleDensity(samplePos + offsetZ);
+
+            return new float3(dx, dy, dz);
         }
     }
+    #endregion
 
+    #region Jobs Mesher
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Vertex
+    {
+        public float3 position;
+        public float3 normal;
+
+        public static readonly VertexAttributeDescriptor[] Format = {
+            new(VertexAttribute.Position, VertexAttributeFormat.Float32),
+            new(VertexAttribute.Normal, VertexAttributeFormat.Float32)
+        };
+    }
+
+    [BurstCompile(FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    public struct MarchingCubesMesherJob : IJob
+    {
+        [ReadOnly] public int pointsPerAxis;
+
+        public NativeList<Vertex> vertices;
+        public NativeList<int> indices;
+
+        int triangleIndex;
+
+        public void Execute()
+        {
+            vertices.Clear();
+            indices.Clear();
+
+            triangleIndex = 0;
+
+            // Loop through all cells filling the verticies and indices lists.
+            for (int i = 0; i < pointsPerAxis * pointsPerAxis * pointsPerAxis; i++)
+            {
+                int3 unwrappedIndex = UnwrapCellIndex(i);
+
+                // Stop one point before the end because each cell includes neighbouring points.
+                if (unwrappedIndex.x >= pointsPerAxis - 1 ||
+                    unwrappedIndex.y >= pointsPerAxis - 1 ||
+                    unwrappedIndex.z >= pointsPerAxis - 1)
+                    continue;
+
+                MarchCell(unwrappedIndex);
+            }
+        }
+
+        int3 UnwrapCellIndex(int index)
+        {
+            int x = index % pointsPerAxis;
+            int y = index / pointsPerAxis % pointsPerAxis;
+            int z = index / (pointsPerAxis * pointsPerAxis);
+
+            return new int3(x, y, z);
+        }
+
+        void MarchCell(int3 index)
+        {
+            Vertex v1 = new()
+            {
+                position = new float3(index.x, index.y, index.z),
+                normal = new float3(0, 1, 0)
+            };
+            Vertex v2 = new()
+            {
+                position = new float3(index.x, index.y + 1, index.z),
+                normal = new float3(0, 1, 0)
+            };
+            Vertex v3 = new()
+            {
+                position = new float3(index.x, index.y + 1, index.z + 1),
+                normal = new float3(0, 1, 0)
+            };
+
+            vertices.Add(v1);
+            vertices.Add(v2);
+            vertices.Add(v3);
+            indices.Add(triangleIndex++);
+        }
+    }
+    #endregion
+
+    #region Tables
     readonly struct MarchTables
     {
         // These two arrays allow for easy lookup of the indices of the two corner points that form an edge.
@@ -423,4 +513,5 @@ namespace IsosurfaceGeneration
             new int[16] { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
         };
     }
+    #endregion
 }

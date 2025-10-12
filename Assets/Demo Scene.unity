@@ -814,7 +814,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &950326876
 Transform:
   m_ObjectHideFlags: 0
@@ -2116,7 +2116,7 @@ MonoBehaviour:
   Shape: 0
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 12
+  Dimention1: 11.553286
   Dimention2: 4
 --- !u!4 &1669996629
 Transform:
@@ -3121,7 +3121,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55795169391e3d247ad050f865be483b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
-  MeshingMethod: 0
+  MeshingMethod: 1
   Dimentions:
     x: 4
     y: 4

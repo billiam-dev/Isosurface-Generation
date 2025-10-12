@@ -5,14 +5,13 @@ namespace IsosurfaceGeneration
 {
     public struct DensityMap
     {
+        public readonly float[] density;
         public readonly int pointsPerAxis;
         public readonly int totalPoints => pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
         // The index cell index where this chunk begins, relative to the whole icosurface.
         // Chunk Index * Chunk Size
         int3 chunkOriginIndex;
-
-        readonly float[] density;
 
         public DensityMap(int3 chunkIndex, int chunkSize)
         {

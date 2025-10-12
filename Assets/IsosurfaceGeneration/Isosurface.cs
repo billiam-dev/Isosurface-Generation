@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -11,6 +13,7 @@ namespace IsosurfaceGeneration
         public enum IcosurfaceGenerationMethod
         {
             MarchingCubes,
+            MarchingCubesJobs,
             SurfaceNets
         }
 
@@ -134,15 +137,84 @@ namespace IsosurfaceGeneration
         {
             DensityMap densityMap = m_Chunks[index].DensityMap;
             int3 chunkOriginIndex = UnwrapChunkIndex(index) * k_ChunkSize;
-            Mesh mesh = MeshingMethod switch
+            
+            switch (MeshingMethod)
             {
-                IcosurfaceGenerationMethod.MarchingCubes => MarchingCubes.MakeMesh(this, densityMap, chunkOriginIndex),
-                IcosurfaceGenerationMethod.SurfaceNets => SurfaceNets.MakeMesh(this, densityMap, chunkOriginIndex),
-                _ => new(),
+                case IcosurfaceGenerationMethod.MarchingCubes:
+                    GenerateMesh_MarchingCubes(index, densityMap, chunkOriginIndex);
+                    break;
+
+                case IcosurfaceGenerationMethod.MarchingCubesJobs:
+                    GenerateMesh_MarchingCubesJobs(index, densityMap, chunkOriginIndex);
+                    break;
+
+                case IcosurfaceGenerationMethod.SurfaceNets:
+                    GenerateMesh_MarchingSurfaceNets(index, densityMap, chunkOriginIndex);
+                    break;
             };
 
-            m_Chunks[index].SetMesh(mesh);
             m_Chunks[index].SetMaterial(Material);
+        }
+
+        void GenerateMesh_MarchingCubes(int index, DensityMap densityMap, int3 chunkOriginIndex)
+        {
+            List<Vector3> vertices = new();
+            List<Vector3> normals = new();
+            List<int> triangles = new();
+
+            MarchingCubesMesher mesher = new()
+            {
+                surface = this,
+                densityMap = densityMap,
+                chunkOriginIndex = chunkOriginIndex,
+                vertices = vertices,
+                normals = normals,
+                triangles = triangles
+            };
+
+            mesher.Execute();
+            m_Chunks[index].SetMesh(vertices, normals, triangles);
+        }
+
+        void GenerateMesh_MarchingCubesJobs(int index, DensityMap densityMap, int3 chunkOriginIndex)
+        {
+            NativeList<Vertex> vertices = new(Allocator.Persistent);
+            NativeList<int> indices = new(Allocator.Persistent);
+
+            MarchingCubesMesherJob mesherJob = new()
+            {
+                pointsPerAxis = densityMap.pointsPerAxis,
+                vertices = vertices,
+                indices = indices
+            };
+
+            JobHandle jobHandle = mesherJob.Schedule();
+            jobHandle.Complete();
+
+            m_Chunks[index].SetMesh(mesherJob);
+
+            mesherJob.vertices.Dispose();
+            mesherJob.indices.Dispose();
+        }
+
+        void GenerateMesh_MarchingSurfaceNets(int index, DensityMap densityMap, int3 chunkOriginIndex)
+        {
+            List<Vector3> vertices = new();
+            List<Vector3> normals = new();
+            List<int> triangles = new();
+
+            SurfaceNetsMesher mesher = new()
+            {
+                surface = this,
+                densityMap = densityMap,
+                chunkOriginIndex = chunkOriginIndex,
+                vertices = vertices,
+                normals = normals,
+                triangles = triangles
+            };
+
+            mesher.Execute();
+            m_Chunks[index].SetMesh(vertices, normals, triangles);
         }
 
         /// <summary>
