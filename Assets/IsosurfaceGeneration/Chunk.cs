@@ -14,6 +14,8 @@ namespace IsosurfaceGeneration
         [SerializeField]
         MeshCollider m_Collider;
 
+        Vector3 m_Bounds;
+
         public DensityMap DensityMap
         {
             get
@@ -30,16 +32,17 @@ namespace IsosurfaceGeneration
         /// <summary>
         /// Create a new chunk at the given sizeX, sizeY, sizeZ chunk index.
         /// </summary>
-        public static Chunk New(int3 chunkIndex, int size)
+        public static Chunk New(int3 chunkIndex, int chunkSize)
         {
             Chunk newChunk = new GameObject($"{chunkIndex.x}, {chunkIndex.y}, {chunkIndex.z}").AddComponent<Chunk>();
-            newChunk.Initialize(chunkIndex, size);
+            newChunk.Initialize(chunkIndex, chunkSize);
             return newChunk;
         }
 
-        void Initialize(int3 chunkIndex, int size)
+        void Initialize(int3 chunkIndex, int chunkSize)
         {
-            m_DensityMap = new DensityMap(chunkIndex, size);
+            m_DensityMap = new DensityMap(chunkIndex, chunkSize);
+            m_Bounds = new Vector3(chunkSize, chunkSize, chunkSize);
 
             m_MeshFilter = gameObject.AddComponent<MeshFilter>();
             m_MeshRenderer = gameObject.AddComponent<MeshRenderer>();
@@ -67,7 +70,7 @@ namespace IsosurfaceGeneration
 
         public bool InViewFrustum(Camera camera)
         {
-            Vector3 dimentions = m_DensityMap.sizeInWorld;
+            Vector3 dimentions = m_Bounds;
             Vector3 cameraPos = camera.transform.position;
             Vector3 chunkCentre = transform.position + (dimentions / 2.0f);
 
@@ -90,7 +93,7 @@ namespace IsosurfaceGeneration
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(1, 1, 1, 0.5f);
 
-            Vector3 dimentions = m_DensityMap.sizeInWorld - Vector3.one;
+            Vector3 dimentions = m_Bounds;
             Gizmos.DrawWireCube(dimentions / 2.0f, dimentions * 0.999f);
         }
 #endif

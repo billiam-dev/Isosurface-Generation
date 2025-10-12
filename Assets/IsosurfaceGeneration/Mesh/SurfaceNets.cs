@@ -131,10 +131,19 @@ public static class SurfaceNets
             }
         }
 
-        for (int x = 0; x < densityMap.sizeX - 1; x++)
-            for (int y = 0; y < densityMap.sizeY - 1; y++)
-                for (int z = 0; z < densityMap.sizeZ - 1; z++)
-                    MarchCell(new int3(x, y, z));
+        // Loop through all cells filling the verticies and triangles lists.
+        for (int i = 0; i < densityMap.totalPoints; i++)
+        {
+            int3 unwrappedIndex = densityMap.UnwrapCellIndex(i);
+
+            // Stop one point before the end because each cell includes neighbouring points.
+            if (unwrappedIndex.x >= densityMap.pointsPerAxis - 1 ||
+                unwrappedIndex.y >= densityMap.pointsPerAxis - 1 ||
+                unwrappedIndex.z >= densityMap.pointsPerAxis - 1)
+                continue;
+
+            MarchCell(unwrappedIndex);
+        }
 
         Mesh mesh = new();
         mesh.SetVertices(vertices);

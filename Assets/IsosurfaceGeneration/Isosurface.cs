@@ -59,7 +59,7 @@ namespace IsosurfaceGeneration
             m_Chunks = new Chunk[m_ChunkDimentions.x * m_ChunkDimentions.y * m_ChunkDimentions.z];
             for (int i = 0; i < m_Chunks.Length; i++)
             {
-                int3 chunkIndex = WrapChunkIndex(i);
+                int3 chunkIndex = UnwrapChunkIndex(i);
 
                 Chunk newChunk = Chunk.New(chunkIndex, k_ChunkSize);
                 newChunk.transform.SetParent(transform);
@@ -114,7 +114,7 @@ namespace IsosurfaceGeneration
                     wrappedIndex.z < 0 || wrappedIndex.z > m_ChunkDimentions.z - 1)
                     continue;
 
-                int index = FlattenChunkIndex(wrappedIndex);
+                int index = WrapChunkIndex(wrappedIndex);
                 m_Chunks[index].DensityMap.ApplyShape(shape);
                 updateChunks.Add(index);
             }
@@ -133,7 +133,7 @@ namespace IsosurfaceGeneration
         void UpdateChunk(int index)
         {
             DensityMap densityMap = m_Chunks[index].DensityMap;
-            int3 chunkOriginIndex = WrapChunkIndex(index) * k_ChunkSize;
+            int3 chunkOriginIndex = UnwrapChunkIndex(index) * k_ChunkSize;
             Mesh mesh = MeshingMethod switch
             {
                 IcosurfaceGenerationMethod.MarchingCubes => MarchingCubes.MakeMesh(this, densityMap, chunkOriginIndex),
@@ -169,7 +169,7 @@ namespace IsosurfaceGeneration
         /// </summary>
         public Chunk GetChunk(int3 index)
         {
-            return m_Chunks[FlattenChunkIndex(index)];
+            return m_Chunks[WrapChunkIndex(index)];
         }
 #endif
 
@@ -178,7 +178,7 @@ namespace IsosurfaceGeneration
             // TODO: Interpolate between corner samples?
 
             ComputeIndices(index, out int3 chunkIndex, out int3 cellIndex);
-            return m_Chunks[FlattenChunkIndex(chunkIndex)].DensityMap.Sample(cellIndex.x, cellIndex.y, cellIndex.z);
+            return m_Chunks[WrapChunkIndex(chunkIndex)].DensityMap.Sample(cellIndex);
         }
 
         void ComputeIndices(int3 index, out int3 chunkIndex, out int3 cellIndex)
@@ -210,17 +210,16 @@ namespace IsosurfaceGeneration
         }
 
 
-        int FlattenChunkIndex(int3 index)
+        int WrapChunkIndex(int3 index)
         {
             return (index.z * m_ChunkDimentions.x * m_ChunkDimentions.y) + (index.y * m_ChunkDimentions.x) + index.x;
         }
 
-        int3 WrapChunkIndex(int index)
+        int3 UnwrapChunkIndex(int index)
         {
-            int z = index / (m_ChunkDimentions.x * m_ChunkDimentions.y);
-            index -= z * m_ChunkDimentions.x * m_ChunkDimentions.y;
-            int y = index / m_ChunkDimentions.x;
             int x = index % m_ChunkDimentions.x;
+            int y = index / m_ChunkDimentions.x % m_ChunkDimentions.y;
+            int z = index / (m_ChunkDimentions.x * m_ChunkDimentions.y);
 
             return new int3(x, y, z);
         }
