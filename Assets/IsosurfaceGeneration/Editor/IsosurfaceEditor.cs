@@ -8,6 +8,7 @@ namespace IsosurfaceGeneration
     public class IsosurfaceEditor : Editor
     {
         SerializedProperty m_MeshingMethod;
+        SerializedProperty m_DensityMethod;
         SerializedProperty m_Dimentions;
         SerializedProperty m_ChunkSize;
         SerializedProperty m_IsoLevel;
@@ -19,6 +20,7 @@ namespace IsosurfaceGeneration
             var o = new PropertyFetcher<Isosurface>(serializedObject);
 
             m_MeshingMethod = o.Find(x => x.MeshingMethod);
+            m_DensityMethod = o.Find(x => x.DensityMethod);
             m_Dimentions = o.Find(x => x.Dimentions);
             m_ChunkSize = o.Find(x => x.ChunkSize);
             m_IsoLevel = o.Find(x => x.IsoLevel);
@@ -31,6 +33,7 @@ namespace IsosurfaceGeneration
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(m_MeshingMethod, new GUIContent("Meshing Method"));
+            EditorGUILayout.PropertyField(m_DensityMethod, new GUIContent("Density Method"));
             EditorGUILayout.PropertyField(m_Dimentions, new GUIContent("Dimentions"));
             EditorGUILayout.PropertyField(m_ChunkSize, new GUIContent("Chunk Size"));
             EditorGUILayout.PropertyField(m_IsoLevel, new GUIContent("Iso Level"));

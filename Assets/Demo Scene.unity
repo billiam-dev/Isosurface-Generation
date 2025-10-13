@@ -151,7 +151,7 @@ MonoBehaviour:
   Shape: 0
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 10.337561
+  Dimention1: 64
   Dimention2: 4
 --- !u!4 &61039940
 Transform:
@@ -162,7 +162,7 @@ Transform:
   m_GameObject: {fileID: 61039938}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 25.2, y: 24, z: 26.3}
+  m_LocalPosition: {x: 128, y: 128, z: 128}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1764,7 +1764,7 @@ MonoBehaviour:
   Shape: 0
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 13.414923
+  Dimention1: 12
   Dimention2: 4
 --- !u!4 &1484929223
 Transform:
@@ -1775,7 +1775,7 @@ Transform:
   m_GameObject: {fileID: 1484929221}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 17.9, y: 14.15, z: 18.48}
+  m_LocalPosition: {x: 16, y: 16, z: 16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3220,6 +3220,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
   MeshingMethod: 1
+  DensityMethod: 0
   Dimentions:
     x: 4
     y: 4
@@ -3442,11 +3443,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
   MeshingMethod: 1
+  DensityMethod: 1
   Dimentions:
-    x: 6
-    y: 6
-    z: 6
-  ChunkSize: 0
+    x: 8
+    y: 8
+    z: 8
+  ChunkSize: 2
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}

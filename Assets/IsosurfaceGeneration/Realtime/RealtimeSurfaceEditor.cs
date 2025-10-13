@@ -16,7 +16,7 @@ namespace IsosurfaceGeneration.RealtimeEditor
         int m_NumBrushes;
 
         int3 m_CurrentDimentions;
-        Isosurface.ChunkCellDimentions m_CurrentChunkSize;
+        ChunkCellDimentions m_CurrentChunkSize;
 
         void GenerateTerrain()
         {

@@ -30,7 +30,7 @@ namespace IsosurfaceGeneration
             // Loop through all cells filling the verticies and indices lists.
             for (int i = 0; i < densityMap.totalPoints; i++)
             {
-                int3 unwrappedIndex = densityMap.UnwrapCellIndex(i);
+                int3 unwrappedIndex = IndexHelper.Unwrap(i, densityMap.pointsPerAxis);
 
                 // Stop one point before the end because each cell includes neighbouring points.
                 if (unwrappedIndex.x >= densityMap.pointsPerAxis - 1 ||

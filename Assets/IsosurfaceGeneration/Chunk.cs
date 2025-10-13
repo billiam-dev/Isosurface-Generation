@@ -61,6 +61,7 @@ namespace IsosurfaceGeneration
 
         public void Destroy()
         {
+            m_DensityMap.Dispose();
             DestroyImmediate(gameObject);
         }
 

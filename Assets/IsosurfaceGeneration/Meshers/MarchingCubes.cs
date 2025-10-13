@@ -37,7 +37,7 @@ namespace IsosurfaceGeneration
             // Loop through all cells filling the verticies and indices lists.
             for (int i = 0; i < densityMap.totalPoints; i++)
             {
-                int3 unwrappedIndex = densityMap.UnwrapCellIndex(i);
+                int3 unwrappedIndex = IndexHelper.Unwrap(i, densityMap.pointsPerAxis);
 
                 // Stop one point before the end because each cell includes neighbouring points.
                 if (unwrappedIndex.x >= densityMap.pointsPerAxis - 1 ||
@@ -123,8 +123,8 @@ namespace IsosurfaceGeneration
             float3 normal = normalA + t * (normalB - normalA);
 
             // ID (for de-duplication)
-            int indexA = densityMap.WrapCellIndex(coordA);
-            int indexB = densityMap.WrapCellIndex(coordB);
+            int indexA = IndexHelper.Wrap(coordA, densityMap.pointsPerAxis);
+            int indexB = IndexHelper.Wrap(coordB, densityMap.pointsPerAxis);
             int2 id = new(Mathf.Min(indexA, indexB), Mathf.Max(indexA, indexB));
 
             if (vertexIndexMap.TryGetValue(id, out int sharedVertexIndex))
@@ -171,7 +171,7 @@ namespace IsosurfaceGeneration
         };
     }
 
-    [BurstCompile(FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct MarchingCubesMesherJob : IJobFor
     {
         public ProfilerMarker marker;
