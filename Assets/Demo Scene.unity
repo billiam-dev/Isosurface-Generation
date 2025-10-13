@@ -119,6 +119,55 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &61039938
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 61039940}
+  - component: {fileID: 61039939}
+  m_Layer: 0
+  m_Name: '0: Sphere Brush (Additive)'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &61039939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61039938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
+  Shape: 0
+  BlendMode: 0
+  Sharpness: 0.2
+  Dimention1: 10.337561
+  Dimention2: 4
+--- !u!4 &61039940
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 61039938}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 25.2, y: 24, z: 26.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2129895804}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &105366884
 GameObject:
   m_ObjectHideFlags: 1
@@ -1683,6 +1732,55 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1484929221
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1484929223}
+  - component: {fileID: 1484929222}
+  m_Layer: 0
+  m_Name: '0: Sphere Brush (Additive)'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1484929222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484929221}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
+  Shape: 0
+  BlendMode: 0
+  Sharpness: 0.2
+  Dimention1: 13.414923
+  Dimention2: 4
+--- !u!4 &1484929223
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484929221}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 17.9, y: 14.15, z: 18.48}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2129895804}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1550291594
 GameObject:
   m_ObjectHideFlags: 0
@@ -2095,7 +2193,7 @@ GameObject:
   - component: {fileID: 1669996629}
   - component: {fileID: 1669996628}
   m_Layer: 0
-  m_Name: '0: Sphere Brush (Additive)'
+  m_Name: '-1: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3088,7 +3186,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1992562658
 Transform:
   m_ObjectHideFlags: 0
@@ -3126,10 +3224,11 @@ MonoBehaviour:
     x: 4
     y: 4
     z: 4
+  ChunkSize: 0
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  PropertyChanged: 0
+  PropertyChanged: 1
 --- !u!114 &1992562660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3298,6 +3397,77 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2129895801
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2129895804}
+  - component: {fileID: 2129895803}
+  - component: {fileID: 2129895802}
+  m_Layer: 0
+  m_Name: Surface 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2129895802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2129895801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cb754568eb328f428a0950fe675b57b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.RealtimeShapeQueue
+  Brushes:
+  - {fileID: 61039939}
+--- !u!114 &2129895803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2129895801}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55795169391e3d247ad050f865be483b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
+  MeshingMethod: 1
+  Dimentions:
+    x: 6
+    y: 6
+    z: 6
+  ChunkSize: 0
+  IsoLevel: 0
+  InvertSurface: 0
+  Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
+  PropertyChanged: 0
+--- !u!4 &2129895804
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2129895801}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1484929223}
+  - {fileID: 61039940}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3330,3 +3500,4 @@ SceneRoots:
   - {fileID: 1000737261}
   - {fileID: 1992031554}
   - {fileID: 950326876}
+  - {fileID: 2129895804}

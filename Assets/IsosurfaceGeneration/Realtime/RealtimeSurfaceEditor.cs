@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,19 +15,30 @@ namespace IsosurfaceGeneration.RealtimeEditor
         Isosurface m_Isosurface;
         int m_NumBrushes;
 
-        void OnEnable()
-        {
-            EditorApplication.update += EvaluatePropertyChanged;
+        int3 m_CurrentDimentions;
+        Isosurface.ChunkCellDimentions m_CurrentChunkSize;
 
-            m_Isosurface = GetComponent<Isosurface>();
+        void GenerateTerrain()
+        {
             m_Isosurface.Destroy();
             m_Isosurface.Generate();
+
+            m_CurrentDimentions = m_Isosurface.Dimentions;
+            m_CurrentChunkSize = m_Isosurface.ChunkSize;
 
             Shape[] shapeQueue = new Shape[Brushes.Length];
             for (int i = 0; i < Brushes.Length; i++)
                 shapeQueue[i] = Brushes[i].GetShapeProperties();
 
             m_Isosurface.Recompute(shapeQueue);
+        }
+
+        void OnEnable()
+        {
+            EditorApplication.update += EvaluatePropertyChanged;
+
+            m_Isosurface = GetComponent<Isosurface>();
+            GenerateTerrain();
         }
 
         void OnDisable()
@@ -37,6 +49,12 @@ namespace IsosurfaceGeneration.RealtimeEditor
 
         void Update()
         {
+            if (m_Isosurface.Dimentions.x != m_CurrentDimentions.x ||
+                m_Isosurface.Dimentions.y != m_CurrentDimentions.y ||
+                m_Isosurface.Dimentions.z != m_CurrentDimentions.z ||
+                m_Isosurface.ChunkSize != m_CurrentChunkSize)
+                GenerateTerrain();
+
             EvaluatePropertyChanged();
         }
 

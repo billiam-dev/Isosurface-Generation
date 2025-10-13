@@ -3,7 +3,6 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
-using static UnityEditor.Searcher.SearcherWindow.Alignment;
 
 namespace IsosurfaceGeneration
 {
@@ -94,17 +93,18 @@ namespace IsosurfaceGeneration
             var vertices = mesher.vertices.ToArray(Allocator.Temp);
             var indices = mesher.indices.ToArray(Allocator.Temp);
 
-            if (mesher.vertices.Length > 2)
+            if (vertices.Length > 2)
             {
-                m_Mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt32);
                 m_Mesh.SetVertexBufferParams(vertices.Length, Vertex.Format);
+                m_Mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
 
                 SubMeshDescriptor subMeshDescriptor = new(0, indices.Length, MeshTopology.Triangles);
-                m_Mesh.subMeshCount = 1;
                 m_Mesh.SetSubMesh(0, subMeshDescriptor, updateFlags);
 
-                m_Mesh.SetIndexBufferData(indices, 0, 0, indices.Length, updateFlags);
                 m_Mesh.SetVertexBufferData(vertices, 0, 0, vertices.Length, 0, updateFlags);
+                m_Mesh.SetIndexBufferData(indices, 0, 0, indices.Length, updateFlags);
+
+                m_Mesh.bounds = new Bounds(Vector3.zero, m_Bounds  * 2.0f);
             }
             else
             {
@@ -125,15 +125,14 @@ namespace IsosurfaceGeneration
         /// </summary>
         public bool InViewFrustum(Camera camera)
         {
-            Vector3 dimentions = m_Bounds;
             Vector3 cameraPos = camera.transform.position;
-            Vector3 chunkCentre = transform.position + (dimentions / 2.0f);
+            Vector3 chunkCentre = transform.position + (m_Bounds / 2.0f);
 
             if (Vector3.Distance(cameraPos, chunkCentre) > k_RenderDistance)
                 return false;
 
             Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
-            Bounds cutoutBounds = GeometryUtility.CalculateBounds(new Vector3[] { Vector3.zero, dimentions * 2.0f }, transform.localToWorldMatrix);
+            Bounds cutoutBounds = GeometryUtility.CalculateBounds(new Vector3[] { Vector3.zero, m_Bounds * 2.0f }, transform.localToWorldMatrix);
             return GeometryUtility.TestPlanesAABB(frustumPlanes, cutoutBounds);
         }
 
@@ -148,8 +147,7 @@ namespace IsosurfaceGeneration
             Gizmos.matrix = transform.localToWorldMatrix;
             Gizmos.color = new Color(1, 1, 1, 0.5f);
 
-            Vector3 dimentions = m_Bounds;
-            Gizmos.DrawWireCube(dimentions / 2.0f, dimentions * 0.999f);
+            Gizmos.DrawWireCube(m_Bounds / 2.0f, m_Bounds * 0.999f);
         }
 #endif
     }
