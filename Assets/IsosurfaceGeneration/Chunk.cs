@@ -35,16 +35,16 @@ namespace IsosurfaceGeneration
         /// <summary>
         /// Create a new chunk object at the given index.
         /// </summary>
-        public static Chunk New(int3 chunkIndex, int chunkSize)
+        public static Chunk New(int3 chunkIndex, int chunkSize, IcosurfaceGenerationMethod generator)
         {
             Chunk newChunk = new GameObject($"{chunkIndex.x}, {chunkIndex.y}, {chunkIndex.z}").AddComponent<Chunk>();
-            newChunk.Initialize(chunkIndex, chunkSize);
+            newChunk.Initialize(chunkIndex, chunkSize, generator);
             return newChunk;
         }
 
-        void Initialize(int3 chunkIndex, int chunkSize)
+        void Initialize(int3 chunkIndex, int chunkSize, IcosurfaceGenerationMethod generator)
         {
-            m_DensityMap = new DensityMap(chunkIndex, chunkSize);
+            m_DensityMap = new DensityMap(chunkIndex, chunkSize, generator);
             m_Bounds = new Vector3(chunkSize, chunkSize, chunkSize);
 
             m_MeshFilter = gameObject.AddComponent<MeshFilter>();
@@ -56,7 +56,7 @@ namespace IsosurfaceGeneration
             m_MeshFilter.sharedMesh = m_Mesh;
             m_Collider.sharedMesh = m_Mesh;
 
-            gameObject.hideFlags = HideFlags.HideInHierarchy | HideFlags.DontSave;
+            gameObject.hideFlags = HideFlags.DontSave | HideFlags.HideInHierarchy;
         }
 
         public void Destroy()
@@ -70,13 +70,20 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void SetMesh(List<Vector3> vertices, List<Vector3> normals, List<int> triangles)
         {
-            m_Mesh.Clear();
+            m_Collider.sharedMesh = null;
 
             if (vertices.Count > 2)
             {
                 m_Mesh.SetVertices(vertices);
                 m_Mesh.SetTriangles(triangles, 0, true);
                 m_Mesh.SetNormals(normals);
+
+                // Re-construct physics mesh
+                m_Collider.sharedMesh = m_Mesh;
+            }
+            else
+            {
+                m_Mesh.Clear();
             }
         }
 
@@ -91,6 +98,8 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void SetMesh(MarchingCubesMesherJob mesher)
         {
+            m_Collider.sharedMesh = null;
+
             var vertices = mesher.vertices.ToArray(Allocator.Temp);
             var indices = mesher.indices.ToArray(Allocator.Temp);
 
@@ -99,13 +108,17 @@ namespace IsosurfaceGeneration
                 m_Mesh.SetVertexBufferParams(vertices.Length, Vertex.Format);
                 m_Mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
 
-                SubMeshDescriptor subMeshDescriptor = new(0, indices.Length, MeshTopology.Triangles);
-                m_Mesh.SetSubMesh(0, subMeshDescriptor, updateFlags);
-
                 m_Mesh.SetVertexBufferData(vertices, 0, 0, vertices.Length, 0, updateFlags);
                 m_Mesh.SetIndexBufferData(indices, 0, 0, indices.Length, updateFlags);
 
+                SubMeshDescriptor subMeshDescriptor = new(0, indices.Length, MeshTopology.Triangles);
+                m_Mesh.subMeshCount = 1;
+                m_Mesh.SetSubMesh(0, subMeshDescriptor, updateFlags);
+
                 m_Mesh.bounds = new Bounds(Vector3.zero, m_Bounds  * 2.0f);
+
+                // Re-construct physics mesh
+                m_Collider.sharedMesh = m_Mesh;
             }
             else
             {

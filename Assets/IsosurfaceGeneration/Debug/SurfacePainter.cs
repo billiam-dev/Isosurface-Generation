@@ -14,8 +14,11 @@ namespace IsosurfaceGeneration.Debugging
         [SerializeField]
         InputMode m_InputMode = InputMode.Mouse;
 
-        [SerializeField]
-        float m_RayLength = 200;
+        [Range(0, 0.5f)]
+        public float PaintDelay = 0.05f;
+
+        [Range(0, 500f)]
+        public float RayLength = 500;
 
         [SerializeField]
         Mesh m_PointerMesh;
@@ -47,7 +50,7 @@ namespace IsosurfaceGeneration.Debugging
             GetSurfaceAtMousePosition(out Isosurface surface, out Vector3 hitPoint);
             m_Pointer.transform.position = hitPoint;
 
-            if (surface && Time.time > m_LastInputTime + 0.1f)
+            if (surface && Time.time > m_LastInputTime + PaintDelay)
             {
                 if (Input.GetMouseButton(0))
                 {
@@ -93,7 +96,7 @@ namespace IsosurfaceGeneration.Debugging
                     break;
             }
             
-            Physics.Raycast(ray, out RaycastHit hitInfo, m_RayLength);
+            Physics.Raycast(ray, out RaycastHit hitInfo, RayLength);
 
             if (hitInfo.collider)
             {

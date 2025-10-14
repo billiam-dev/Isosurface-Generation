@@ -49,6 +49,9 @@ namespace IsosurfaceGeneration.RealtimeEditor
 
         void Update()
         {
+            if (Application.isPlaying)
+                return;
+
             if (m_Isosurface.Dimentions.x != m_CurrentDimentions.x ||
                 m_Isosurface.Dimentions.y != m_CurrentDimentions.y ||
                 m_Isosurface.Dimentions.z != m_CurrentDimentions.z ||

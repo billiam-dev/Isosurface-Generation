@@ -1,3 +1,4 @@
+using System;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -5,9 +6,9 @@ using UnityEngine;
 
 namespace IsosurfaceGeneration
 {
-    public struct DensityMap
+    public struct DensityMap : IDisposable
     {
-        public NativeArray<float> density; // TODO: Convert to sbyte array
+        public NativeArray<float> density; // TODO: convert to sbyte array.
         public readonly int pointsPerAxis;
         public readonly int totalPoints => pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
@@ -15,9 +16,16 @@ namespace IsosurfaceGeneration
         // Chunk Index * Chunk Size
         int3 chunkOriginIndex;
 
-        public DensityMap(int3 chunkIndex, int chunkSize)
+        public DensityMap(int3 chunkIndex, int chunkSize, IcosurfaceGenerationMethod generator)
         {
             pointsPerAxis = chunkSize + 1;
+
+            // Since we need access to adjacent cells when computing normals, we expand the density map by 1 on each size.
+            // In the single-threaded methods we do not need to do this, since we can just get adjacent chunks from the isosurface,
+            // however all data used by JOBS must be blittable, so we cannot have a reference to the isosurface.
+            if (generator == IcosurfaceGenerationMethod.MarchingCubesJobs)
+                pointsPerAxis += 2;
+
             density = new NativeArray<float>(pointsPerAxis * pointsPerAxis * pointsPerAxis, Allocator.Persistent);
             chunkOriginIndex = chunkIndex * chunkSize;
         }
@@ -126,7 +134,7 @@ namespace IsosurfaceGeneration
 
         public static float SmoothMax(float a, float b, float k)
         {
-            return Mathf.Log(Mathf.Exp(k * a) + Mathf.Exp(k * b)) / k;
+            return math.log(math.exp(k * a) + math.exp(k * b)) / k;
         }
 
         public static float SmoothMin(float a, float b, float k)

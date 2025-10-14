@@ -12,6 +12,7 @@ using UnityEngine.Rendering;
 // https://developer.nvidia.com/gpugems/gpugems3/part-i-geometry/chapter-1-generating-complex-procedural-terrains-using-gpu
 // https://github.com/Fobri/Terraxel-Unity
 // https://eetumaenpaa.fi/blog/marching-cubes-optimizations-in-unity/#job-system
+// https://github.com/Eldemarkki/Marching-Cubes-Terrain/tree/master
 
 namespace IsosurfaceGeneration
 {
@@ -165,6 +166,12 @@ namespace IsosurfaceGeneration
         public float3 position;
         public float3 normal;
 
+        public Vertex(float3 position, float3 normal)
+        {
+            this.position = position;
+            this.normal = normal;
+        }
+
         public static readonly VertexAttributeDescriptor[] Format = {
             new(VertexAttribute.Position, VertexAttributeFormat.Float32),
             new(VertexAttribute.Normal, VertexAttributeFormat.Float32)
@@ -177,53 +184,52 @@ namespace IsosurfaceGeneration
         public ProfilerMarker marker;
 
         [ReadOnly] public NativeArray<float> density;
-        [ReadOnly] public int pointsPerAxis;
+        [ReadOnly] public int densityPPA;
+        [ReadOnly] public int itteratePPA;
         [ReadOnly] public float isoLevel;
 
-        public NativeList<Vertex> vertices;
-        public NativeList<ushort> indices;
+        [NativeDisableParallelForRestriction, WriteOnly] public NativeList<Vertex> vertices;
+        [NativeDisableParallelForRestriction, WriteOnly] public NativeList<ushort> indices;
 
-        //NativeHashMap<int3, int> vertexDictionary;
+        public NativeCounter vertexCounter;
+        public NativeHashMap<int2, ushort> vertexIndexMap;
 
         public void Execute(int index)
         {
-            int3 unwrappedIndex = UnwrapIndex(index);
-
-            // Stop one point before the end because each cell includes neighbouring points.
-            if (unwrappedIndex.x >= pointsPerAxis - 1 ||
-                unwrappedIndex.y >= pointsPerAxis - 1 ||
-                unwrappedIndex.z >= pointsPerAxis - 1)
-                return;
+            int3 unwrappedIndex = IndexHelper.Unwrap(index, itteratePPA);
+            index = IndexHelper.Wrap(unwrappedIndex, densityPPA);
+            index += (densityPPA * densityPPA) + densityPPA + 1;
 
             MarchCell(index);
         }
 
+
         void MarchCell(int index)
         {
             // Calculate coordinates of each corner of the current cell.
-            CellCorners corners = new CellCorners()
+            CellCorners<int> cellCorners = new()
             {
                 corner1 = index,
                 corner2 = index + 1,
-                corner3 = index + (pointsPerAxis * pointsPerAxis) + 1,
-                corner4 = index + pointsPerAxis * pointsPerAxis,
-                corner5 = index + pointsPerAxis,
-                corner6 = index + pointsPerAxis + 1,
-                corner7 = index + (pointsPerAxis * pointsPerAxis) + pointsPerAxis + 1,
-                corner8 = index + (pointsPerAxis * pointsPerAxis) + pointsPerAxis
+                corner3 = index + (densityPPA * densityPPA) + 1,
+                corner4 = index + densityPPA * densityPPA,
+                corner5 = index + densityPPA,
+                corner6 = index + densityPPA + 1,
+                corner7 = index + (densityPPA * densityPPA) + densityPPA + 1,
+                corner8 = index + (densityPPA * densityPPA) + densityPPA
             };
 
             // Calculate unique coord for each cube configuration.
             // The value is used to look up the edge table, which indicates which edges of the cube the surface passes through.
             // We pack the density values into float4's to utilize SIMD.
-            float4 packedDensity1 = new(density[corners[0]], density[corners[1]], density[corners[2]], density[corners[3]]);
-            float4 packedDensity2 = new(density[corners[4]], density[corners[5]], density[corners[6]], density[corners[7]]);
+            float4 packedDensity1 = new(density[cellCorners[0]], density[cellCorners[1]], density[cellCorners[2]], density[cellCorners[3]]);
+            float4 packedDensity2 = new(density[cellCorners[4]], density[cellCorners[5]], density[cellCorners[6]], density[cellCorners[7]]);
             int4 p1 = math.select(0, new int4(1, 2, 4, 8), packedDensity1 > isoLevel);
             int4 p2 = math.select(0, new int4(16, 32, 64, 128), packedDensity2 > isoLevel);
             byte cubeConfiguration = (byte)(math.csum(p1) | math.csum(p2));
 
             // Exit early if there are no intersections, i.e. the cube is full or empty.
-            if (cubeConfiguration == 0 || cubeConfiguration == 0xff)
+            if (cubeConfiguration == 0 || cubeConfiguration == 255)
                 return;
 
             // Create indices for current cube configuration.
@@ -248,22 +254,20 @@ namespace IsosurfaceGeneration
                 int c0 = MarchTables.cornerIndexAFromEdge[edgeIndexC];
                 int c1 = MarchTables.cornerIndexBFromEdge[edgeIndexC];
 
-                GetOrMakeVertex(corners[a0], corners[a1]);
-                GetOrMakeVertex(corners[b0], corners[b1]);
-                GetOrMakeVertex(corners[c0], corners[c1]);
+                GetOrMakeVertex(cellCorners[a0], cellCorners[a1]);
+                GetOrMakeVertex(cellCorners[b0], cellCorners[b1]);
+                GetOrMakeVertex(cellCorners[c0], cellCorners[c1]);
             }
         }
 
         void GetOrMakeVertex(int indexA, int indexB)
         {
-            // Get density values.
+            int3 coordA = IndexHelper.Unwrap(indexA, densityPPA);
+            int3 coordB = IndexHelper.Unwrap(indexB, densityPPA);
             float densityA = density[indexA];
             float densityB = density[indexB];
 
-            int3 coordA = UnwrapIndex(indexA);
-            int3 coordB = UnwrapIndex(indexB);
-
-            // Since the cell sizeInWorld is 1, the coord doubles as the position, neat.
+            // Since the cell size is 1, the coord doubles as the position, neat.
             float3 posA = new(coordA.x, coordA.y, coordA.z);
             float3 posB = new(coordB.x, coordB.y, coordB.z);
 
@@ -271,86 +275,40 @@ namespace IsosurfaceGeneration
             float t = (isoLevel - densityA) / (densityB - densityA);
             float3 position = posA + t * (posB - posA);
 
-            Vertex v = new Vertex()
+            // Compute normal
+            float3 normalA = CalculateNormal(coordA);
+            float3 normalB = CalculateNormal(coordB);
+            float3 normal = normalA + t * (normalB - normalA);
+
+            // Make vertex ID - for vertex merging.
+            int2 id = new(math.min(indexA, indexB), math.max(indexA, indexB));
+
+            if (vertexIndexMap.TryGetValue(id, out ushort sharedVertexIndex))
             {
-                position = position,
-                normal = new float3(0, 1, 0)
-            };
-
-            indices.Add((ushort)vertices.Length);
-            vertices.Add(v);
-        }
-
-        int3 UnwrapIndex(int index)
-        {
-            int x = index % pointsPerAxis;
-            int y = index / pointsPerAxis % pointsPerAxis;
-            int z = index / (pointsPerAxis * pointsPerAxis);
-
-            return new int3(x, y, z);
-        }
-
-        struct CellCorners
-        {
-            // Hello yes I would like to vomit
-            public int corner1;
-            public int corner2;
-            public int corner3;
-            public int corner4;
-            public int corner5;
-            public int corner6;
-            public int corner7;
-            public int corner8;
-
-            public int this[int index]
-            {
-                get
-                {
-                    return index switch
-                    {
-                        0 => corner1,
-                        1 => corner2,
-                        2 => corner3,
-                        3 => corner4,
-                        4 => corner5,
-                        5 => corner6,
-                        6 => corner7,
-                        7 => corner8,
-                        _ => throw new System.IndexOutOfRangeException(),
-                    };
-                }
-                set
-                {
-                    switch (index)
-                    {
-                        case 0:
-                            corner1 = value;
-                            break;
-                        case 1:
-                            corner2 = value;
-                            break;
-                        case 2:
-                            corner3 = value;
-                            break;
-                        case 3:
-                            corner4 = value;
-                            break;
-                        case 4:
-                            corner5 = value;
-                            break;
-                        case 5:
-                            corner6 = value;
-                            break;
-                        case 6:
-                            corner7 = value;
-                            break;
-                        case 7:
-                            corner8 = value;
-                            break;
-                        default: throw new System.IndexOutOfRangeException();
-                    }
-                }
+                indices.Add(sharedVertexIndex);
             }
+            else
+            {
+                ushort vertexIndex = (ushort)vertexCounter.Count;
+                vertexIndexMap.Add(id, vertexIndex);
+                indices.Add(vertexIndex);
+                vertices.Add(new Vertex(position, normal));
+                vertexCounter.Increment();
+            }
+        }
+
+        float3 CalculateNormal(int3 coord)
+        {
+            int3 offsetX = new(1, 0, 0);
+            int3 offsetY = new(0, 1, 0);
+            int3 offsetZ = new(0, 0, 1);
+
+            float3 normal;
+            normal.x = density[IndexHelper.Wrap(coord - offsetX, densityPPA)] - density[IndexHelper.Wrap(coord + offsetX, densityPPA)];
+            normal.y = density[IndexHelper.Wrap(coord - offsetY, densityPPA)] - density[IndexHelper.Wrap(coord + offsetY, densityPPA)];
+            normal.z = density[IndexHelper.Wrap(coord - offsetZ, densityPPA)] - density[IndexHelper.Wrap(coord + offsetZ, densityPPA)];
+
+            return math.normalize(normal);
         }
     }
     #endregion
@@ -367,7 +325,7 @@ namespace IsosurfaceGeneration
         // Lookup table giving the coord of the edge that each vertex lies on for any cube configuration.
 
         // The first coord is the cube configuration.
-        // Since a cube has 8 corners, there are 2^8 = 256 possible configurations.
+        // Since a cube has 8 cellCorners, there are 2^8 = 256 possible configurations.
 
         // The second coord is the vertex coord. No configuration has more than 16 vertices.
         // An entry of -1 means that there are no further vertices in the configuration.
