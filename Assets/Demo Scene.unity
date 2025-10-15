@@ -953,7 +953,7 @@ GameObject:
   - component: {fileID: 975179715}
   - component: {fileID: 975179714}
   m_Layer: 0
-  m_Name: Large Game Surface
+  m_Name: Medium Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -999,6 +999,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
+  ProfilingEnabled: 1
   PropertyChanged: 0
 --- !u!4 &975179716
 Transform:
@@ -1378,7 +1379,7 @@ Transform:
   m_GameObject: {fileID: 1131499564}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 36.1, y: 41.7, z: 81.2}
+  m_LocalPosition: {x: 39.2, y: 24, z: 88.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1896,7 +1897,7 @@ Transform:
   m_GameObject: {fileID: 1437345244}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 31.65, y: 35.65, z: 40.25}
+  m_LocalPosition: {x: 82, y: 35.65, z: 41}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3359,7 +3360,7 @@ GameObject:
   - component: {fileID: 1992562659}
   - component: {fileID: 1992562660}
   m_Layer: 0
-  m_Name: Small Test Surface
+  m_Name: Small Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3403,6 +3404,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
+  ProfilingEnabled: 1
   PropertyChanged: 1
 --- !u!114 &1992562660
 MonoBehaviour:
@@ -3535,7 +3537,7 @@ GameObject:
   - component: {fileID: 2129895803}
   - component: {fileID: 2129895802}
   m_Layer: 0
-  m_Name: Large Test Surface
+  m_Name: Large Surface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3578,6 +3580,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
+  ProfilingEnabled: 1
   PropertyChanged: 1
 --- !u!4 &2129895804
 Transform:
@@ -3628,5 +3631,5 @@ SceneRoots:
   - {fileID: 463586072}
   - {fileID: 1000737261}
   - {fileID: 1992031554}
-  - {fileID: 2129895804}
   - {fileID: 975179716}
+  - {fileID: 2129895804}

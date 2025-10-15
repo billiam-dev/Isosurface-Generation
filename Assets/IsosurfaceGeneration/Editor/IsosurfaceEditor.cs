@@ -14,6 +14,7 @@ namespace IsosurfaceGeneration
         SerializedProperty m_IsoLevel;
         SerializedProperty m_InvertSurface;
         SerializedProperty m_Material;
+        SerializedProperty m_ProfilingEnabled;
 
         void OnEnable()
         {
@@ -26,6 +27,7 @@ namespace IsosurfaceGeneration
             m_IsoLevel = o.Find(x => x.IsoLevel);
             m_InvertSurface = o.Find(x => x.InvertSurface);
             m_Material = o.Find(x => x.Material);
+            m_ProfilingEnabled = o.Find(x => x.ProfilingEnabled);
         }
 
         public override void OnInspectorGUI()
@@ -39,6 +41,7 @@ namespace IsosurfaceGeneration
             EditorGUILayout.PropertyField(m_IsoLevel, new GUIContent("Iso Level"));
             EditorGUILayout.PropertyField(m_InvertSurface, new GUIContent("Invert Surface"));
             EditorGUILayout.PropertyField(m_Material, new GUIContent("Material"));
+            EditorGUILayout.PropertyField(m_ProfilingEnabled, new GUIContent("Enable Profiling"));
 
             serializedObject.ApplyModifiedProperties();
         }

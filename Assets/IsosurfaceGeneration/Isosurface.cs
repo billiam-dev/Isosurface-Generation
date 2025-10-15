@@ -44,6 +44,8 @@ namespace IsosurfaceGeneration
         public bool InvertSurface = false;
 
         public Material Material;
+
+        public bool ProfilingEnabled = false;
         #endregion
 
         public bool PropertyChanged;
@@ -53,6 +55,8 @@ namespace IsosurfaceGeneration
         int3 m_Dimentions;
         int m_ChunkSize;
         Chunk[] m_Chunks;
+
+        double m_ProfilingTimestamp;
 
         /// <summary>
         /// Initialize all chunks, does not apply shapes automatically.
@@ -98,6 +102,8 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void Recompute(Shape[] shapeQueue)
         {
+            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
+
             float baseDensity = InvertSurface ? 32 : -32;
 
             for (int i = 0; i < m_Chunks.Length; i++)
@@ -105,6 +111,12 @@ namespace IsosurfaceGeneration
                 m_Chunks[i].DensityMap.FillDensityMap(baseDensity, DensityMethod);
                 foreach (Shape shape in shapeQueue)
                     m_Chunks[i].DensityMap.ApplyShape(shape, DensityMethod);
+            }
+
+            if (ProfilingEnabled)
+            {
+                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
+                Debug.Log($"Recomputed densities of {m_Chunks.Length} chunks in {time} seconds.");
             }
 
             UpdateAllChunks();
@@ -115,6 +127,8 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void ApplyShapeAtPosition(Shape shape, Vector3 positionWS)
         {
+            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
+
             ComputeIndices(WorldPositionToIndex(positionWS), out int3 chunkIndex, out _);
             List<int> updateChunks = new();
 
@@ -132,6 +146,12 @@ namespace IsosurfaceGeneration
                 updateChunks.Add(index);
             }
 
+            if (ProfilingEnabled)
+            {
+                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
+                Debug.Log($"Recomputed densities of 27 chunks in {time} seconds.");
+            }
+
             // Update meshes.
             foreach (int index in updateChunks)
                 UpdateChunk(index);
@@ -139,8 +159,16 @@ namespace IsosurfaceGeneration
 
         void UpdateAllChunks()
         {
+            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
+
             for (int i = 0; i < m_Chunks.Length; i++)
                 UpdateChunk(i);
+
+            if (ProfilingEnabled)
+            {
+                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
+                Debug.Log($"Regenerated {m_Chunks.Length} chunk meshes in {time} seconds.");
+            }
         }
 
         void UpdateChunk(int index)
