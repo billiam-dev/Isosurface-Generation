@@ -1,7 +1,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace IsosurfaceGeneration
+namespace IsosurfaceGeneration.Util
 {
     public static class DistanceFunction
     {

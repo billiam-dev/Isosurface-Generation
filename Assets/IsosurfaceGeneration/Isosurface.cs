@@ -1,3 +1,5 @@
+using IsosurfaceGeneration.Meshing;
+using IsosurfaceGeneration.Util;
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -112,18 +114,14 @@ namespace IsosurfaceGeneration
         /// <summary>
         /// Apply a shape array to all chunks. For total surface regeneration.
         /// </summary>
-        public void Recompute(Shape[] shapeQueue)
+        public void Recompute(NativeArray<Shape> shapeQueue)
         {
             m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
 
             float baseDensity = InvertSurface ? 32 : -32;
 
             for (int i = 0; i < m_Chunks.Length; i++)
-            {
-                m_Chunks[i].DensityMap.FillDensityMap(baseDensity, DensityMethod);
-                foreach (Shape shape in shapeQueue)
-                    m_Chunks[i].DensityMap.ApplyShape(shape, DensityMethod);
-            }
+                m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, DensityMethod);
 
             if (ProfilingEnabled)
             {
@@ -195,11 +193,15 @@ namespace IsosurfaceGeneration
                     break;
 
                 case IcosurfaceGenerationMethod.MarchingCubesJobs:
-                    GenerateMesh_MarchingCubesJobs(index, densityMap, chunkOriginIndex);
+                    GenerateMesh_MarchingCubesJobs(index, densityMap);
                     break;
 
                 case IcosurfaceGenerationMethod.SurfaceNets:
-                    GenerateMesh_MarchingSurfaceNets(index, densityMap, chunkOriginIndex);
+                    GenerateMesh_SurfaceNets(index, densityMap, chunkOriginIndex);
+                    break;
+
+                case IcosurfaceGenerationMethod.SurfaceNetsJobs:
+                    GenerateMesh_SurfaceNetsJobs(index, densityMap);
                     break;
             };
 
@@ -228,7 +230,7 @@ namespace IsosurfaceGeneration
 
         readonly ProfilerMarker ProfileMarker = new("Marching Cubes Job");
 
-        void GenerateMesh_MarchingCubesJobs(int index, DensityMap densityMap, int3 chunkOriginIndex)
+        void GenerateMesh_MarchingCubesJobs(int index, DensityMap densityMap)
         {
             NativeList<Vertex> vertices = new(100, Allocator.Persistent);
             NativeList<ushort> indices = new(100, Allocator.Persistent);
@@ -268,7 +270,7 @@ namespace IsosurfaceGeneration
             vertexIndexMap.Dispose();
         }
 
-        void GenerateMesh_MarchingSurfaceNets(int index, DensityMap densityMap, int3 chunkOriginIndex)
+        void GenerateMesh_SurfaceNets(int index, DensityMap densityMap, int3 chunkOriginIndex)
         {
             List<Vector3> vertices = new();
             List<Vector3> normals = new();
@@ -286,6 +288,46 @@ namespace IsosurfaceGeneration
 
             mesher.Execute();
             m_Chunks[index].SetMesh(vertices, normals, triangles);
+        }
+
+        void GenerateMesh_SurfaceNetsJobs(int index, DensityMap densityMap)
+        {
+            NativeList<Vertex> vertices = new(100, Allocator.Persistent);
+            NativeList<ushort> indices = new(100, Allocator.Persistent);
+            NativeCounter vertexCounter = new(Allocator.Persistent);
+            NativeHashMap<int3, ushort> vertexIndexMap = new(100, Allocator.Persistent);
+
+            int shortenedPPA = densityMap.pointsPerAxis - 3;
+            int numPointsToItterate = shortenedPPA * shortenedPPA * shortenedPPA;
+
+            SurfaceNetsMesherJob mesherJob = new()
+            {
+                marker = ProfileMarker,
+                density = densityMap.density,
+                densityPPA = densityMap.pointsPerAxis,
+                itteratePPA = shortenedPPA,
+                isoLevel = IsoLevel,
+                vertices = vertices,
+                indices = indices,
+                vertexCounter = vertexCounter,
+                vertexIndexMap = vertexIndexMap
+            };
+
+            ProfileMarker.Begin();
+
+            // Because the density map for each chunk extends beyond the bounds of the marching cubes space, we do not need to loop through all of the voxels.
+            // So rather than having a lengthy returns statement for voxels that are out-of-bounds, we only itterate over the space required by using an index wrapping function.            
+            JobHandle jobHandle = mesherJob.Schedule(numPointsToItterate, default);
+            jobHandle.Complete();
+
+            ProfileMarker.End();
+
+            m_Chunks[index].SetMesh(mesherJob);
+
+            vertices.Dispose();
+            indices.Dispose();
+            vertexCounter.Dispose();
+            vertexIndexMap.Dispose();
         }
 
         /// <summary>
@@ -407,7 +449,8 @@ namespace IsosurfaceGeneration
     {
         MarchingCubes,
         MarchingCubesJobs,
-        SurfaceNets
+        SurfaceNets,
+        SurfaceNetsJobs
     }
 
     public enum DensityGenerationMethod

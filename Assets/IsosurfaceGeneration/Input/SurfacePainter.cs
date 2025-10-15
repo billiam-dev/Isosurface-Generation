@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace IsosurfaceGeneration.Debugging
+namespace IsosurfaceGeneration.Input
 {
     [RequireComponent(typeof(Camera))]
     public class SurfacePainter : MonoBehaviour
@@ -52,12 +52,12 @@ namespace IsosurfaceGeneration.Debugging
 
             if (surface && Time.time > m_LastInputTime + PaintDelay)
             {
-                if (Input.GetMouseButton(0))
+                if (UnityEngine.Input.GetMouseButton(0))
                 {
                     ApplyShape(surface, hitPoint, BlendMode.Additive);
                 }
 
-                if (Input.GetMouseButton(1))
+                if (UnityEngine.Input.GetMouseButton(1))
                 {
                     ApplyShape(surface, hitPoint, BlendMode.Subtractive);
                 }
@@ -87,7 +87,7 @@ namespace IsosurfaceGeneration.Debugging
             switch (m_InputMode)
             {
                 case InputMode.Mouse:
-                    ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                    ray = Camera.main.ScreenPointToRay(UnityEngine.Input.mousePosition);
                     break;
 
                 case InputMode.Camera:

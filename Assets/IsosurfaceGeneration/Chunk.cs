@@ -1,3 +1,4 @@
+using IsosurfaceGeneration.Meshing;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -101,10 +102,20 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void SetMesh(MarchingCubesMesherJob mesher)
         {
-            m_Collider.sharedMesh = null;
+            SetMesh(mesher.vertices.ToArray(Allocator.Temp), mesher.indices.ToArray(Allocator.Temp));
+        }
 
-            var vertices = mesher.vertices.ToArray(Allocator.Temp);
-            var indices = mesher.indices.ToArray(Allocator.Temp);
+        /// <summary>
+        /// Assign mesh data from a surface mesh mesher job.
+        /// </summary>
+        public void SetMesh(SurfaceNetsMesherJob mesher)
+        {
+            SetMesh(mesher.vertices.ToArray(Allocator.Temp), mesher.indices.ToArray(Allocator.Temp));
+        }
+
+        void SetMesh(NativeArray<Vertex> vertices, NativeArray<ushort> indices)
+        {
+            m_Collider.sharedMesh = null;
 
             if (vertices.Length > 2)
             {
@@ -118,7 +129,7 @@ namespace IsosurfaceGeneration
                 m_Mesh.subMeshCount = 1;
                 m_Mesh.SetSubMesh(0, subMeshDescriptor, updateFlags);
 
-                m_Mesh.bounds = new Bounds(Vector3.zero, m_Bounds  * 2.0f);
+                m_Mesh.bounds = new Bounds(Vector3.zero, m_Bounds * 2.0f);
 
                 // Re-construct physics mesh
 #if UNITY_EDITOR

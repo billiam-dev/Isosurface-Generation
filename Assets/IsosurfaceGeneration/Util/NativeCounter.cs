@@ -3,7 +3,7 @@ using System.Threading;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 
-namespace IsosurfaceGeneration
+namespace IsosurfaceGeneration.Util
 {
     public unsafe struct NativeCounter : IDisposable
     {

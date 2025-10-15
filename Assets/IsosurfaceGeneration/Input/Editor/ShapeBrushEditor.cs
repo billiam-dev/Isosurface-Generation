@@ -3,7 +3,7 @@ using UnityEditor.IMGUI.Controls;
 using UnityEditor.Rendering;
 using UnityEngine;
 
-namespace IsosurfaceGeneration.RealtimeEditor
+namespace IsosurfaceGeneration.Input
 {
     [CustomEditor(typeof(ShapeBrush))]
     class ShapeBrushEditor : Editor

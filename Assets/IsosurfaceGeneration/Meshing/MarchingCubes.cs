@@ -1,12 +1,12 @@
+using IsosurfaceGeneration.Util;
+using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 // Resources:
 // https://developer.nvidia.com/gpugems/gpugems3/part-i-geometry/chapter-1-generating-complex-procedural-terrains-using-gpu
@@ -14,7 +14,7 @@ using UnityEngine.Rendering;
 // https://eetumaenpaa.fi/blog/marching-cubes-optimizations-in-unity/#job-system
 // https://github.com/Eldemarkki/Marching-Cubes-Terrain/tree/master
 
-namespace IsosurfaceGeneration
+namespace IsosurfaceGeneration.Meshing
 {
     #region Single Threaded Mesher
     public struct MarchingCubesMesher
@@ -159,25 +159,6 @@ namespace IsosurfaceGeneration
     #endregion
 
     #region Jobs Mesher
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Vertex
-    {
-        public float3 position;
-        public float3 normal;
-
-        public Vertex(float3 position, float3 normal)
-        {
-            this.position = position;
-            this.normal = normal;
-        }
-
-        public static readonly VertexAttributeDescriptor[] Format = {
-            new(VertexAttribute.Position, VertexAttributeFormat.Float32),
-            new(VertexAttribute.Normal, VertexAttributeFormat.Float32)
-        };
-    }
-
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct MarchingCubesMesherJob : IJobFor
     {
@@ -192,10 +173,13 @@ namespace IsosurfaceGeneration
         [NativeDisableParallelForRestriction, WriteOnly] public NativeList<ushort> indices;
 
         public NativeCounter vertexCounter;
-        public NativeHashMap<int2, ushort> vertexIndexMap;
+        [NativeDisableParallelForRestriction] public NativeHashMap<int2, ushort> vertexIndexMap;
 
         public void Execute(int index)
         {
+            // To allow smooth normals on the edges of each chunk, the density map extends beyond the surface space on all axis.
+            // Typically, we would see a branch here to skip cells beyond the mesh space,
+            // however instead I schedule only the number of voxels in the mesh space, and then convert index as so.
             int3 unwrappedIndex = IndexHelper.Unwrap(index, itteratePPA);
             index = IndexHelper.Wrap(unwrappedIndex, densityPPA);
             index += (densityPPA * densityPPA) + densityPPA + 1;
@@ -309,6 +293,81 @@ namespace IsosurfaceGeneration
             normal.z = density[IndexHelper.Wrap(coord - offsetZ, densityPPA)] - density[IndexHelper.Wrap(coord + offsetZ, densityPPA)];
 
             return math.normalize(normal);
+        }
+    }
+
+    struct CellCorners<T> : IEnumerable<T>
+    {
+        public T corner1;
+        public T corner2;
+        public T corner3;
+        public T corner4;
+        public T corner5;
+        public T corner6;
+        public T corner7;
+        public T corner8;
+
+        public T this[int index]
+        {
+            get
+            {
+                return index switch
+                {
+                    0 => corner1,
+                    1 => corner2,
+                    2 => corner3,
+                    3 => corner4,
+                    4 => corner5,
+                    5 => corner6,
+                    6 => corner7,
+                    7 => corner8,
+                    _ => throw new System.IndexOutOfRangeException(),
+                };
+            }
+            set
+            {
+                switch (index)
+                {
+                    case 0:
+                        corner1 = value;
+                        break;
+                    case 1:
+                        corner2 = value;
+                        break;
+                    case 2:
+                        corner3 = value;
+                        break;
+                    case 3:
+                        corner4 = value;
+                        break;
+                    case 4:
+                        corner5 = value;
+                        break;
+                    case 5:
+                        corner6 = value;
+                        break;
+                    case 6:
+                        corner7 = value;
+                        break;
+                    case 7:
+                        corner8 = value;
+                        break;
+                    default: throw new System.IndexOutOfRangeException();
+                }
+            }
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                yield return this[i];
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
     #endregion

@@ -1,6 +1,6 @@
 using Unity.Mathematics;
 
-namespace IsosurfaceGeneration
+namespace IsosurfaceGeneration.Util
 {
     public static class IndexHelper
     {

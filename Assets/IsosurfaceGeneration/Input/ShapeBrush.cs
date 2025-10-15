@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace IsosurfaceGeneration.RealtimeEditor
+namespace IsosurfaceGeneration.Input
 {
     public class ShapeBrush : MonoBehaviour
     {
