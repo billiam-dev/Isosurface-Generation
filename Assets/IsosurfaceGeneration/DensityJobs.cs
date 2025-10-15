@@ -10,7 +10,7 @@ namespace IsosurfaceGeneration
     public struct FillDensityJob : IJobParallelFor
     {
         [ReadOnly] public float value;
-        public NativeArray<float> density;
+        [NativeDisableParallelForRestriction] public NativeArray<float> density;
 
         public void Execute(int index)
         {
@@ -19,37 +19,29 @@ namespace IsosurfaceGeneration
     }
 
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
-    public struct ApplyShapeJob : IJobParallelFor
+    public struct ApplyShereJob : IJobParallelFor
     {
-        [ReadOnly] public Shape shape;
+        [NativeDisableParallelForRestriction] public NativeArray<float> density;
+
+        [ReadOnly] public Matrix4x4 matrix;
+        [ReadOnly] public float radius;
+        [ReadOnly] public float sharpness;
+        [ReadOnly] public bool subtractive;
+
         [ReadOnly] public int pointsPerAxis;
         [ReadOnly] public int3 chunkOriginIndex;
-
-        public NativeArray<float> density;
 
         public void Execute(int index)
         {
             int3 uwrappedIndex = IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex;
-            float3 samplePos = shape.matrix.MultiplyPoint(new Vector3(uwrappedIndex.x, uwrappedIndex.y, uwrappedIndex.z));
+            float3 samplePos = matrix.MultiplyPoint(new Vector3(uwrappedIndex.x, uwrappedIndex.y, uwrappedIndex.z)); // TODO: custom fload3x4 -> float4x4 mult
 
-            float distance = 0;
-            switch (shape.shapeID)
-            {
-                case ShapeFuncion.Sphere:
-                    distance = DistanceFunction.Sphere(samplePos, shape.dimention1);
-                    break;
-            }
+            float distance = DistanceFunction.Sphere(samplePos, radius);
 
-            switch (shape.blendMode)
-            {
-                case BlendMode.Additive:
-                    density[index] = DensityMap.SmoothMax(-distance, density[index], shape.sharpness);
-                    break;
-
-                case BlendMode.Subtractive:
-                    density[index] = DensityMap.SmoothMin(distance, density[index], shape.sharpness);
-                    break;
-            }
+            // To avoid a branch here, we can use math.select to create a -1 multiplier in subtractive cases.
+            // In this case, we want to use a smooth min function, which can be attained by negating the inputs to smooth max, and then negating the result.
+            float mult = math.select(1.0f, -1.0f, subtractive);
+            density[index] = DistanceFunction.SmoothMax(-distance, density[index] * mult, sharpness) * mult;
         }
     }
 }

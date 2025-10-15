@@ -19,6 +19,7 @@ namespace IsosurfaceGeneration.RealtimeEditor
 
         int3 m_CurrentDimentions;
         ChunkCellDimentions m_CurrentChunkSize;
+        IcosurfaceGenerationMethod m_CurrentMeshingMethod;
 
         void OnEnable()
         {
@@ -39,7 +40,8 @@ namespace IsosurfaceGeneration.RealtimeEditor
 
         void Update()
         {
-            if (m_Isosurface.Dimentions.x != m_CurrentDimentions.x ||
+            if (m_CurrentMeshingMethod != m_Isosurface.MeshingMethod ||
+                m_Isosurface.Dimentions.x != m_CurrentDimentions.x ||
                 m_Isosurface.Dimentions.y != m_CurrentDimentions.y ||
                 m_Isosurface.Dimentions.z != m_CurrentDimentions.z ||
                 m_Isosurface.ChunkSize != m_CurrentChunkSize)
@@ -53,6 +55,7 @@ namespace IsosurfaceGeneration.RealtimeEditor
             m_Isosurface.Destroy();
             m_Isosurface.Generate();
 
+            m_CurrentMeshingMethod = m_Isosurface.MeshingMethod;
             m_CurrentDimentions = m_Isosurface.Dimentions;
             m_CurrentChunkSize = m_Isosurface.ChunkSize;
 

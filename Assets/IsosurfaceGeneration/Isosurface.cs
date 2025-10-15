@@ -12,12 +12,16 @@ namespace IsosurfaceGeneration
     {
         #region Properties
         /// <summary>
-        /// Which algorithm to use when constructing the icosurface. For performance comparison.
+        /// Which algorithm to use when constructing the icosurface. Enable profiling to see how long each method takes.
         /// </summary>
-        [Tooltip("Which algorithm to use when constructing the icosurface. For performance comparison.")]
-        public IcosurfaceGenerationMethod MeshingMethod;
+        [Tooltip("Which algorithm to use when constructing the icosurface.Enable profiling to see how long each method takes.")]
+        public IcosurfaceGenerationMethod MeshingMethod = IcosurfaceGenerationMethod.MarchingCubesJobs;
 
-        public DensityGenerationMethod DensityMethod;
+        /// <summary>
+        /// Which method to use when computing the underlying densities. Enable profiling to see how long each method takes.
+        /// </summary>
+        [Tooltip("Which method to use when computing the underlying densities. Enable profiling to see how long each method takes.")]
+        public DensityGenerationMethod DensityMethod = DensityGenerationMethod.Jobs;
 
         /// <summary>
         /// Dimentions of the isosurface in chunks. Will be applied upon regenerating chunks.
@@ -43,12 +47,20 @@ namespace IsosurfaceGeneration
         [Tooltip("When enabled, the world is filled in by default and subtractive brushes must be used to carve holes.")]
         public bool InvertSurface = false;
 
+        /// <summary>
+        /// Apply a material to the surface.
+        /// </summary>
+        [Tooltip("Apply a material to the surface.")]
         public Material Material;
 
+        /// <summary>
+        /// Enable to see how much time the density and meshing algorithms are taking to compute the surface.
+        /// </summary>
+        [Tooltip("Enable to see how much time the density and meshing algorithms are taking to compute the surface.")]
         public bool ProfilingEnabled = false;
         #endregion
 
-        public bool PropertyChanged;
+        public bool PropertyChanged {  get; set; }
 
         public bool IsGenerated => m_Chunks != null;
 
@@ -149,7 +161,7 @@ namespace IsosurfaceGeneration
             if (ProfilingEnabled)
             {
                 double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
-                Debug.Log($"Recomputed densities of 27 chunks in {time} seconds.");
+                Debug.Log($"Recomputed densities of {updateChunks.Count} chunks in {time} seconds.");
             }
 
             // Update meshes.
@@ -413,7 +425,7 @@ namespace IsosurfaceGeneration
 
     public struct Shape
     {
-        public Matrix4x4 matrix;
+        public Matrix4x4 matrix; // TODO: float4x4
         public ShapeFuncion shapeID;
         public BlendMode blendMode;
         public float sharpness;

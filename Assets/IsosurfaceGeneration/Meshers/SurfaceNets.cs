@@ -1,5 +1,9 @@
 using System.Collections.Generic;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Profiling;
 using UnityEngine;
 
 // Resources:
@@ -157,62 +161,121 @@ namespace IsosurfaceGeneration
     }
     #endregion
 
+    #region Jobs Mesher
+
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    public struct SurfaceNetsMesherJob : IJobFor
+    {
+        public ProfilerMarker marker;
+
+        [ReadOnly] public NativeArray<float> density;
+        [ReadOnly] public int densityPPA;
+        [ReadOnly] public int itteratePPA;
+        [ReadOnly] public float isoLevel;
+
+        [NativeDisableParallelForRestriction, WriteOnly] public NativeList<Vertex> vertices;
+        [NativeDisableParallelForRestriction, WriteOnly] public NativeList<ushort> indices;
+
+        public NativeCounter vertexCounter;
+        public NativeHashMap<int2, ushort> vertexIndexMap;
+
+        public void Execute(int index)
+        {
+            int3 unwrappedIndex = IndexHelper.Unwrap(index, itteratePPA);
+            index = IndexHelper.Wrap(unwrappedIndex, densityPPA);
+            index += (densityPPA * densityPPA) + densityPPA + 1;
+
+            MarchCell(index);
+        }
+
+        void MarchCell(int index)
+        {
+            /*
+
+            // Check the three neighboring points in each positive Axis.
+            // If the sign of the current point and the neighboring point is different, the voxel intersects the surface.
+            for (int i = 0; i < 3; i++)
+            {
+                float d1 = density[index];
+                float d2 = density[index + NetsTables.Axis[i]];
+
+                if (d1 < 0 && d2 >= 0)
+                    MakeQuad(index, i);
+                else if (d1 >= 0 && d2 < 0)
+                    MakeQuad_Reversed(index, i);
+            }
+
+            */
+        }
+
+        void MakeQuad(int index, int axisIndex)
+        {
+
+        }
+
+        void MakeQuad_Reversed(int index, int axisIndex)
+        {
+
+        }
+    }
+    #endregion
+
     #region Tables
     readonly struct NetsTables
     {
         // The 12 edges of a cube. Used to interpolate a point onto the estimated surface of the density map.
         public static readonly int3[][] Edges = new int3[12][]
         {
-            // Edges on min Z axis
-            new int3[2] { new(0, 0, 0), new(1, 0, 0) },
-            new int3[2] { new(1, 0, 0), new(1, 1, 0) },
-            new int3[2] { new(1, 1, 0), new(0, 1, 0) },
-            new int3[2] { new(0, 1, 0), new(0, 0, 0) },
+        // Edges on min Z axis
+        new int3[2] { new(0, 0, 0), new(1, 0, 0) },
+        new int3[2] { new(1, 0, 0), new(1, 1, 0) },
+        new int3[2] { new(1, 1, 0), new(0, 1, 0) },
+        new int3[2] { new(0, 1, 0), new(0, 0, 0) },
 
-            // Edges on max Z axis
-            new int3[2] { new(0, 0, 1), new(1, 0, 1) },
-            new int3[2] { new(1, 0, 1), new(1, 1, 1) },
-            new int3[2] { new(1, 1, 1), new(0, 1, 1) },
-            new int3[2] { new(0, 1, 1), new(0, 0, 1) },
+        // Edges on max Z axis
+        new int3[2] { new(0, 0, 1), new(1, 0, 1) },
+        new int3[2] { new(1, 0, 1), new(1, 1, 1) },
+        new int3[2] { new(1, 1, 1), new(0, 1, 1) },
+        new int3[2] { new(0, 1, 1), new(0, 0, 1) },
 
-            // Edges connecting min Z to max Z
-            new int3[2] { new(0, 0, 0), new(0, 0, 1) },
-            new int3[2] { new(1, 0, 0), new(1, 0, 1) },
-            new int3[2] { new(1, 1, 0), new(1, 1, 1) },
-            new int3[2] { new(0, 1, 0), new(0, 1, 1) }
+        // Edges connecting min Z to max Z
+        new int3[2] { new(0, 0, 0), new(0, 0, 1) },
+        new int3[2] { new(1, 0, 0), new(1, 0, 1) },
+        new int3[2] { new(1, 1, 0), new(1, 1, 1) },
+        new int3[2] { new(0, 1, 0), new(0, 1, 1) }
         };
 
         // The 4 relative indexes of the corners of a Quad that is orthogonal to each axis.
         public static readonly int3[][] QuadPoints = new int3[3][]
         {
-                new int3[4]
-                {
-                    new(0, 0, -1),
-                    new(0, -1, -1),
-                    new(0, -1, 0),
-                    new(0, 0, 0)
-                },
-                new int3[4]
-                {
-                    new(0, 0, -1),
-                    new(0, 0, 0),
-                    new(-1, 0, 0),
-                    new(-1, 0, -1)
-                },
-                new int3[4]
-                {
-                    new(0, 0, 0),
-                    new(0, -1, 0),
-                    new(-1, -1, 0),
-                    new(-1, 0, 0)
-                }
+            new int3[4]
+            {
+                new(0, 0, -1),
+                new(0, -1, -1),
+                new(0, -1, 0),
+                new(0, 0, 0)
+            },
+            new int3[4]
+            {
+                new(0, 0, -1),
+                new(0, 0, 0),
+                new(-1, 0, 0),
+                new(-1, 0, -1)
+            },
+            new int3[4]
+            {
+                new(0, 0, 0),
+                new(0, -1, 0),
+                new(-1, -1, 0),
+                new(-1, 0, 0)
+            }
         };
 
         public static readonly int3[] Axis = new int3[3]
         {
-                new(1, 0, 0),
-                new(0, 1, 0),
-                new(0, 0, 1)
+            new(1, 0, 0),
+            new(0, 1, 0),
+            new(0, 0, 1)
         };
     }
     #endregion

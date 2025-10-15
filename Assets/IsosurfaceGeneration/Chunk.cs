@@ -79,7 +79,10 @@ namespace IsosurfaceGeneration
                 m_Mesh.SetNormals(normals);
 
                 // Re-construct physics mesh
-                m_Collider.sharedMesh = m_Mesh;
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+#endif
+                    m_Collider.sharedMesh = m_Mesh;
             }
             else
             {
@@ -118,7 +121,10 @@ namespace IsosurfaceGeneration
                 m_Mesh.bounds = new Bounds(Vector3.zero, m_Bounds  * 2.0f);
 
                 // Re-construct physics mesh
-                m_Collider.sharedMesh = m_Mesh;
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+#endif
+                    m_Collider.sharedMesh = m_Mesh;
             }
             else
             {

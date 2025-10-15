@@ -2,6 +2,7 @@ using System;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using UnityEditor.Build;
 using UnityEngine;
 
 namespace IsosurfaceGeneration
@@ -15,6 +16,8 @@ namespace IsosurfaceGeneration
         // The index cell index where this chunk begins, relative to the whole icosurface.
         // Chunk Index * Chunk Size
         int3 chunkOriginIndex;
+
+        const int k_InterloopBatchCount = 128;
 
         public DensityMap(int3 chunkIndex, int chunkSize, IcosurfaceGenerationMethod generator)
         {
@@ -93,11 +96,11 @@ namespace IsosurfaceGeneration
                 switch (shape.blendMode)
                 {
                     case BlendMode.Additive:
-                        density[i] = SmoothMax(-distance, density[i], shape.sharpness);
+                        density[i] = DistanceFunction.SmoothMax(-distance, density[i], shape.sharpness);
                         break;
 
                     case BlendMode.Subtractive:
-                        density[i] = SmoothMin(distance, density[i], shape.sharpness);
+                        density[i] = DistanceFunction.SmoothMin(distance, density[i], shape.sharpness);
                         break;
                 }
             }
@@ -111,35 +114,35 @@ namespace IsosurfaceGeneration
                 value = value
             };
 
-            fillDensityJob.Schedule(totalPoints, 1).Complete();
+            fillDensityJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
         }
 
         void ApplyShape_Jobs(Shape shape)
         {
-            ApplyShapeJob applyShapeJob = new()
-            {
-                density = density,
-                shape = shape,
-                pointsPerAxis = pointsPerAxis,
-                chunkOriginIndex = chunkOriginIndex,
-            };
+            bool subtractive = shape.blendMode == BlendMode.Subtractive;
 
-            applyShapeJob.Schedule(totalPoints, 1).Complete();
+            switch (shape.shapeID)
+            {
+                case ShapeFuncion.Sphere:
+                    ApplyShereJob applyShapeJob = new()
+                    {
+                        density = density,
+                        matrix = shape.matrix,
+                        radius = shape.dimention1,
+                        sharpness = shape.sharpness,
+                        subtractive = subtractive,
+                        pointsPerAxis = pointsPerAxis,
+                        chunkOriginIndex = chunkOriginIndex,
+                    };
+
+                    applyShapeJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+                    break;
+            }
         }
 
         public float Sample(int3 index)
         {
             return density[IndexHelper.Wrap(index, pointsPerAxis)];
-        }
-
-        public static float SmoothMax(float a, float b, float k)
-        {
-            return math.log(math.exp(k * a) + math.exp(k * b)) / k;
-        }
-
-        public static float SmoothMin(float a, float b, float k)
-        {
-            return -SmoothMax(-a, -b, k);
         }
     }
 }
