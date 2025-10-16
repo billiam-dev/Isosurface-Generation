@@ -50,5 +50,15 @@ namespace IsosurfaceGeneration.Input
                 m_RecomputeSurface = true;
             }
         }
+
+#if UNITY_EDITOR
+        void OnDrawGizmos()
+        {
+            Gizmos.color = new(0, 1, 0, 0.1f);
+
+            foreach (ShapeBrush brush in m_Brushes)
+                brush.DrawChunkVolume(m_Isosurface);
+        }
+#endif
     }
 }

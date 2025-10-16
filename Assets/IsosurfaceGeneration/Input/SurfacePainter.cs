@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace IsosurfaceGeneration.Input
@@ -11,15 +12,24 @@ namespace IsosurfaceGeneration.Input
             Camera
         }
 
+        [Header("Shape")]
+        [Range(1.0f, 32.0f)]
+        public float Radius = 1.0f;
+
+        [Range(0.1f, 1.0f)]
+        public float Sharpness = 1.0f;
+
+        [Header("Input")]
         [SerializeField]
         InputMode m_InputMode = InputMode.Mouse;
 
-        [Range(0, 0.5f)]
+        [Range(0.0f, 0.5f)]
         public float PaintDelay = 0.05f;
 
-        [Range(0, 500f)]
-        public float RayLength = 500;
+        [Range(0.0f, 500f)]
+        public float RayLength = 500.0f;
 
+        [Header("Pointer")]
         [SerializeField]
         Mesh m_PointerMesh;
 
@@ -28,6 +38,8 @@ namespace IsosurfaceGeneration.Input
 
         GameObject m_Pointer;
         float m_LastInputTime;
+
+        const float k_BushSizeScrollSpeed = 50.0f;
 
         void OnEnable()
         {
@@ -47,20 +59,34 @@ namespace IsosurfaceGeneration.Input
 
         void Update()
         {
+            // Try find surface
             GetSurfaceAtMousePosition(out Isosurface surface, out Vector3 hitPoint);
-            m_Pointer.transform.position = hitPoint;
 
+            // Update pointer
+            m_Pointer.SetActive(surface != null);
+            if (surface != null)
+            {
+                m_Pointer.transform.position = hitPoint;
+                m_Pointer.transform.localScale = 2.0f * Radius * Vector3.one;
+            }
+
+            // Radius input
+            if (UnityEngine.Input.GetAxis("Mouse ScrollWheel") < 0.0f)
+                Radius += k_BushSizeScrollSpeed * Time.deltaTime;
+
+            if (UnityEngine.Input.GetAxis("Mouse ScrollWheel") > 0.0f)
+                Radius -= k_BushSizeScrollSpeed * Time.deltaTime;
+
+            Radius = Mathf.Clamp(Radius, 1.0f, 32.0f);
+
+            // Shape input
             if (surface && Time.time > m_LastInputTime + PaintDelay)
             {
                 if (UnityEngine.Input.GetMouseButton(0))
-                {
                     ApplyShape(surface, hitPoint, BlendMode.Additive);
-                }
 
                 if (UnityEngine.Input.GetMouseButton(1))
-                {
                     ApplyShape(surface, hitPoint, BlendMode.Subtractive);
-                }
             }
         }
 
@@ -68,14 +94,14 @@ namespace IsosurfaceGeneration.Input
         {
             Shape shape = new()
             {
-                matrix = Matrix4x4.TRS(position, Quaternion.identity, Vector3.one).inverse,
+                matrix = math.inverse(new AffineTransform(new float3(position), quaternion.identity, 1.0f)),
                 shapeID = ShapeFuncion.Sphere,
                 blendMode = blendMode,
-                sharpness = 1,
-                dimention1 = 1
+                sharpness = Sharpness,
+                dimention1 = Radius
             };
 
-            surface.ApplyShapeAtPosition(shape, position);
+            surface.ApplyShape(shape);
 
             m_LastInputTime = Time.time;
         }

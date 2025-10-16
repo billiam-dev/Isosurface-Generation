@@ -6,8 +6,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.UI.GridLayoutGroup;
 
 // Resources:
 // https://medium.com/@ryandremer/implementing-surface-nets-in-godot-f48ecd5f29ff
@@ -169,8 +167,6 @@ namespace IsosurfaceGeneration.Meshing
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct SurfaceNetsMesherJob : IJobFor
     {
-        public ProfilerMarker marker;
-
         [ReadOnly] public NativeArray<float> density;
         [ReadOnly] public int densityPPA;
         [ReadOnly] public int itteratePPA;
@@ -293,6 +289,8 @@ namespace IsosurfaceGeneration.Meshing
 
         float3 CalculateNormal(int3 coord)
         {
+            return new float3(0, 1, 0);
+
             float3 normal;
             normal.x = density[IndexHelper.Wrap(coord - NetsTables.Axis[0], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[0], densityPPA)];
             normal.y = density[IndexHelper.Wrap(coord - NetsTables.Axis[1], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[1], densityPPA)];

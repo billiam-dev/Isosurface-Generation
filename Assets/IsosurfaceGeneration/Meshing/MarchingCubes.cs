@@ -1,6 +1,7 @@
 using IsosurfaceGeneration.Util;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -162,8 +163,6 @@ namespace IsosurfaceGeneration.Meshing
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct MarchingCubesMesherJob : IJobFor
     {
-        public ProfilerMarker marker;
-
         [ReadOnly] public NativeArray<float> density;
         [ReadOnly] public int densityPPA;
         [ReadOnly] public int itteratePPA;
@@ -187,7 +186,7 @@ namespace IsosurfaceGeneration.Meshing
             MarchCell(index);
         }
 
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void MarchCell(int index)
         {
             // Calculate coordinates of each corner of the current cell.
@@ -244,6 +243,7 @@ namespace IsosurfaceGeneration.Meshing
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void GetOrMakeVertex(int indexA, int indexB)
         {
             int3 coordA = IndexHelper.Unwrap(indexA, densityPPA);
@@ -262,7 +262,7 @@ namespace IsosurfaceGeneration.Meshing
             // Compute normal
             float3 normalA = CalculateNormal(coordA);
             float3 normalB = CalculateNormal(coordB);
-            float3 normal = normalA + t * (normalB - normalA);
+            float3 normal = math.normalize(normalA + t * (normalB - normalA));
 
             // Make vertex ID - for vertex merging.
             int2 id = new(math.min(indexA, indexB), math.max(indexA, indexB));
@@ -281,6 +281,7 @@ namespace IsosurfaceGeneration.Meshing
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         float3 CalculateNormal(int3 coord)
         {
             int3 offsetX = new(1, 0, 0);
@@ -292,7 +293,7 @@ namespace IsosurfaceGeneration.Meshing
             normal.y = density[IndexHelper.Wrap(coord - offsetY, densityPPA)] - density[IndexHelper.Wrap(coord + offsetY, densityPPA)];
             normal.z = density[IndexHelper.Wrap(coord - offsetZ, densityPPA)] - density[IndexHelper.Wrap(coord + offsetZ, densityPPA)];
 
-            return math.normalize(normal);
+            return normal;
         }
     }
 

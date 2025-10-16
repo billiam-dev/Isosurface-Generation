@@ -10,7 +10,7 @@ namespace IsosurfaceGeneration.Input
     [RequireComponent(typeof(Isosurface))]
     public abstract class SurfaceInput : MonoBehaviour
     {
-        Isosurface m_Isosurface;
+        internal Isosurface m_Isosurface;
 
         internal NativeList<Shape> m_ShapeQueue;
         internal bool m_RecomputeSurface;

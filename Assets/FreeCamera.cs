@@ -11,9 +11,15 @@ public class FreeCamera : MonoBehaviour
 
     Vector3 m_Rotation;
 
-    void Start()
+    void OnEnable()
     {
         Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    void OnDisable()
+    {
+        Cursor.lockState = CursorLockMode.Confined;
         Cursor.visible = false;
     }
 

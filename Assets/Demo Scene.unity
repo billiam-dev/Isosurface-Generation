@@ -890,7 +890,7 @@ Transform:
   m_GameObject: {fileID: 849662014}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 64, y: 64, z: 64}
+  m_LocalPosition: {x: 64, y: 64.8, z: 57.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -922,7 +922,7 @@ Transform:
   m_GameObject: {fileID: 950326875}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 10.7, y: 10.04, z: 15.27}
+  m_LocalPosition: {x: 69.9, y: 34.9, z: 32.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -990,7 +990,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
   MeshingMethod: 1
-  DensityMethod: 1
+  DensityMethod: 2
   Dimentions:
     x: 8
     y: 8
@@ -1368,7 +1368,7 @@ MonoBehaviour:
   Shape: 0
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 8
+  Dimention1: 46.469536
   Dimention2: 4
 --- !u!4 &1131499566
 Transform:
@@ -1379,7 +1379,7 @@ Transform:
   m_GameObject: {fileID: 1131499564}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 39.2, y: 24, z: 88.3}
+  m_LocalPosition: {x: 32, y: 24, z: 32}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2208,6 +2208,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 307675575f9d9b2429b113132f57ef71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainGeneration.Debug.TerrainPainter
+  Radius: 1
+  Sharpness: 1
   m_InputMode: 1
   PaintDelay: 0.02
   RayLength: 500
@@ -2470,7 +2472,7 @@ GameObject:
   - component: {fileID: 1669996629}
   - component: {fileID: 1669996628}
   m_Layer: 0
-  m_Name: '-1: Sphere Brush (Additive)'
+  m_Name: '0: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3358,6 +3360,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1992562658}
   - component: {fileID: 1992562659}
+  - component: {fileID: 1992562660}
   m_Layer: 0
   m_Name: Small Surface
   m_TagString: Untagged
@@ -3393,17 +3396,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55795169391e3d247ad050f865be483b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
-  MeshingMethod: 1
-  DensityMethod: 0
+  MeshingMethod: 3
+  DensityMethod: 2
   Dimentions:
-    x: 4
-    y: 4
-    z: 4
-  ChunkSize: 1
+    x: 8
+    y: 8
+    z: 8
+  ChunkSize: 0
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
   ProfilingEnabled: 1
+--- !u!114 &1992562660
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1992562657}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cb754568eb328f428a0950fe675b57b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::IsosurfaceGeneration.Input.RealtimeShapesInput
+  m_Brushes:
+  - {fileID: 1669996628}
 --- !u!1 &2101232588
 GameObject:
   m_ObjectHideFlags: 1
@@ -3540,7 +3557,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
   MeshingMethod: 1
-  DensityMethod: 1
+  DensityMethod: 2
   Dimentions:
     x: 8
     y: 8

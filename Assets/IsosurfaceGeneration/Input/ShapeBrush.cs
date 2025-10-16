@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace IsosurfaceGeneration.Input
@@ -56,9 +57,13 @@ namespace IsosurfaceGeneration.Input
 
         public Shape GetShapeProperties()
         {
+            float3 pos = new(transform.localPosition.x, transform.localPosition.y, transform.localPosition.z);
+            quaternion rot = new(transform.localRotation.x, transform.localRotation.y, transform.localRotation.z, transform.localRotation.w);
+            float3 scale = new(transform.localScale.x, transform.localScale.y, transform.localScale.z);
+
             return new Shape()
             {
-                matrix = Matrix4x4.TRS(transform.localPosition, transform.localRotation, transform.localScale).inverse,
+                matrix = math.inverse(new AffineTransform(pos, rot, scale)),
                 shapeID = Shape,
                 blendMode = BlendMode,
                 sharpness = Sharpness,
@@ -77,6 +82,20 @@ namespace IsosurfaceGeneration.Input
         {
             UpdateName();
             m_PropertyChanged = true;
+        }
+
+        public void DrawChunkVolume(Isosurface isosurface)
+        {
+            int3 chunkVolume = GetShapeProperties().ComputeChunkVolume(isosurface);
+            isosurface.ComputeIndices(transform.position, out int3 chunkIndex, out int3 densityIndex);
+
+            Vector3 centre = new Vector3(chunkIndex.x, chunkIndex.y, chunkIndex.z) + (Vector3.one / 2.0f);
+            centre *= isosurface.ChunkSizeCells;
+
+            Vector3 size = new Vector3(chunkVolume.x, chunkVolume.y, chunkVolume.z);
+            size *= isosurface.ChunkSizeCells;
+
+            Gizmos.DrawWireCube(centre, size);
         }
 #endif
     }

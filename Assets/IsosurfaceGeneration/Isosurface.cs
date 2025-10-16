@@ -23,7 +23,7 @@ namespace IsosurfaceGeneration
         /// Which method to use when computing the underlying densities. Enable profiling to see how long each method takes.
         /// </summary>
         [Tooltip("Which method to use when computing the underlying densities. Enable profiling to see how long each method takes.")]
-        public DensityGenerationMethod DensityMethod = DensityGenerationMethod.Jobs;
+        public DensityGenerationMethod DensityMethod = DensityGenerationMethod.RecomputeJobs;
 
         /// <summary>
         /// Dimentions of the isosurface in chunks. Will be applied upon regenerating chunks.
@@ -66,6 +66,14 @@ namespace IsosurfaceGeneration
 
         public bool IsGenerated => m_Chunks != null;
 
+        public int ChunkSizeCells => ChunkSize switch
+        {
+            ChunkCellDimentions.Low8 => 8,
+            ChunkCellDimentions.Medium16 => 16,
+            ChunkCellDimentions.High32 => 32,
+            _ => 8
+        };
+
         int3 m_Dimentions;
         int m_ChunkSize;
         Chunk[] m_Chunks;
@@ -77,13 +85,7 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void Generate()
         {
-            m_ChunkSize = ChunkSize switch
-            {
-                ChunkCellDimentions.Low8 => 8,
-                ChunkCellDimentions.Medium16 => 16,
-                ChunkCellDimentions.High32 => 32,
-                _ => 8
-            };
+            m_ChunkSize = ChunkSizeCells;
 
             m_Dimentions = Dimentions;
             m_Chunks = new Chunk[m_Dimentions.x * m_Dimentions.y * m_Dimentions.z];
@@ -120,8 +122,22 @@ namespace IsosurfaceGeneration
 
             float baseDensity = InvertSurface ? 32 : -32;
 
-            for (int i = 0; i < m_Chunks.Length; i++)
-                m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, DensityMethod);
+            if (DensityMethod == DensityGenerationMethod.Recompute || DensityMethod == DensityGenerationMethod.RecomputeJobs)
+            {
+                // Loop through all chunks, set initial value and then apply all shapes.
+                for (int i = 0; i < m_Chunks.Length; i++)
+                    m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, DensityMethod);
+            }
+            else
+            {
+                // First fill entire map with value.
+                for (int i = 0; i < m_Chunks.Length; i++)
+                    m_Chunks[i].DensityMap.FillDensityMap(baseDensity, DensityMethod);
+
+                // Then loop through shapes and apply based on bounding volume.
+                for (int i = 0; i < shapeQueue.Length; i++)
+                    ApplyShapeWithBoundingVolume(shapeQueue[i], out _); // TODO: output effected chunk mask? bitwise || together and only update those chunks.
+            }
 
             if (ProfilingEnabled)
             {
@@ -129,48 +145,9 @@ namespace IsosurfaceGeneration
                 Debug.Log($"Recomputed densities of {m_Chunks.Length} chunks in {time} seconds.");
             }
 
-            UpdateAllChunks();
-        }
-
-        /// <summary>
-        /// Apply a shape at the given position.
-        /// </summary>
-        public void ApplyShapeAtPosition(Shape shape, Vector3 positionWS)
-        {
             m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
 
-            ComputeIndices(WorldPositionToIndex(positionWS), out int3 chunkIndex, out _);
-            List<int> updateChunks = new();
-
-            // Apply density functions.
-            for (int i = 0; i < 27; i++)
-            {
-                int3 wrappedIndex = chunkIndex + k_AdjacentChunkIndices[i];
-                if (wrappedIndex.x < 0 || wrappedIndex.x > m_Dimentions.x - 1 ||
-                    wrappedIndex.y < 0 || wrappedIndex.y > m_Dimentions.y - 1 ||
-                    wrappedIndex.z < 0 || wrappedIndex.z > m_Dimentions.z - 1)
-                    continue;
-
-                int index = IndexHelper.Wrap(wrappedIndex, m_Dimentions);
-                m_Chunks[index].DensityMap.ApplyShape(shape, DensityMethod);
-                updateChunks.Add(index);
-            }
-
-            if (ProfilingEnabled)
-            {
-                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
-                Debug.Log($"Recomputed densities of {updateChunks.Count} chunks in {time} seconds.");
-            }
-
-            // Update meshes.
-            foreach (int index in updateChunks)
-                UpdateChunk(index);
-        }
-
-        void UpdateAllChunks()
-        {
-            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
-
+            // Update all chunks
             for (int i = 0; i < m_Chunks.Length; i++)
                 UpdateChunk(i);
 
@@ -178,6 +155,53 @@ namespace IsosurfaceGeneration
             {
                 double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
                 Debug.Log($"Regenerated {m_Chunks.Length} chunk meshes in {time} seconds.");
+            }
+        }
+
+        /// <summary>
+        /// Apply a shape at the given position.
+        /// </summary>
+        public void ApplyShape(Shape shape)
+        {
+            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
+
+            ApplyShapeWithBoundingVolume(shape, out List<int> effectedChunks);
+
+            foreach (int index in effectedChunks)
+                UpdateChunk(index);
+
+            if (ProfilingEnabled)
+            {
+                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
+                Debug.Log($"Recomputed densities of {effectedChunks.Count} chunks in {time} seconds.");
+            }
+        }
+
+        void ApplyShapeWithBoundingVolume(Shape shape, out List<int> effectedChunks)
+        {
+            ComputeIndices(WorldPositionToIndex(math.inverse(shape.matrix).t), out int3 chunkIndex, out _);
+
+            effectedChunks = new();
+            int3 chunkVolume = shape.ComputeChunkVolume(this);
+            
+            for (int x = 0; x < chunkVolume.x; x++)
+            {
+                for (int y = 0; y < chunkVolume.y; y++)
+                {
+                    for (int z = 0; z < chunkVolume.z; z++)
+                    {
+                        int3 wrappedIndex = new(x, y, z);
+                        wrappedIndex -= chunkVolume / 2;
+                        wrappedIndex += chunkIndex;
+
+                        if (!ChunkInBounds(wrappedIndex))
+                            continue;
+
+                        int index = IndexHelper.Wrap(wrappedIndex, m_Dimentions);
+                        m_Chunks[index].DensityMap.ApplyShape(shape, DensityMethod);
+                        effectedChunks.Add(index);
+                    }
+                }
             }
         }
 
@@ -228,8 +252,6 @@ namespace IsosurfaceGeneration
             m_Chunks[index].SetMesh(vertices, normals, triangles);
         }
 
-        readonly ProfilerMarker ProfileMarker = new("Marching Cubes Job");
-
         void GenerateMesh_MarchingCubesJobs(int index, DensityMap densityMap)
         {
             NativeList<Vertex> vertices = new(100, Allocator.Persistent);
@@ -242,7 +264,6 @@ namespace IsosurfaceGeneration
 
             MarchingCubesMesherJob mesherJob = new()
             {
-                marker = ProfileMarker,
                 density = densityMap.density,
                 densityPPA = densityMap.pointsPerAxis,
                 itteratePPA = shortenedPPA,
@@ -253,15 +274,11 @@ namespace IsosurfaceGeneration
                 vertexIndexMap = vertexIndexMap
             };
 
-            ProfileMarker.Begin();
-
             // Because the density map for each chunk extends beyond the bounds of the marching cubes space, we do not need to loop through all of the voxels.
             // So rather than having a lengthy returns statement for voxels that are out-of-bounds, we only itterate over the space required by using an index wrapping function.            
             JobHandle jobHandle = mesherJob.Schedule(numPointsToItterate, default);
             jobHandle.Complete();
             
-            ProfileMarker.End();
-
             m_Chunks[index].SetMesh(mesherJob);
 
             vertices.Dispose();
@@ -302,7 +319,6 @@ namespace IsosurfaceGeneration
 
             SurfaceNetsMesherJob mesherJob = new()
             {
-                marker = ProfileMarker,
                 density = densityMap.density,
                 densityPPA = densityMap.pointsPerAxis,
                 itteratePPA = shortenedPPA,
@@ -313,14 +329,10 @@ namespace IsosurfaceGeneration
                 vertexIndexMap = vertexIndexMap
             };
 
-            ProfileMarker.Begin();
-
             // Because the density map for each chunk extends beyond the bounds of the marching cubes space, we do not need to loop through all of the voxels.
             // So rather than having a lengthy returns statement for voxels that are out-of-bounds, we only itterate over the space required by using an index wrapping function.            
             JobHandle jobHandle = mesherJob.Schedule(numPointsToItterate, default);
             jobHandle.Complete();
-
-            ProfileMarker.End();
 
             m_Chunks[index].SetMesh(mesherJob);
 
@@ -340,7 +352,7 @@ namespace IsosurfaceGeneration
 
 #if UNITY_EDITOR
         /// <summary>
-        /// From a world space position, compute the object-space wrappedIndex and then break it down into a chunk wrappedIndex and a cell wrappedIndex within that chunk.
+        /// From a world space position, compute the object-space index and then break it down into a chunk index and a cell index within that chunk.
         /// For debugging.
         /// </summary>
         public void ComputeIndices(Vector3 positionWS, out int3 chunkIndex, out int3 densityIndex)
@@ -349,7 +361,7 @@ namespace IsosurfaceGeneration
         }
 
         /// <summary>
-        /// Get the chunk at the given wrappedIndex.
+        /// Get the chunk at the given index.
         /// For debugging.
         /// </summary>
         public Chunk GetChunk(int3 chunkIndex)
@@ -360,8 +372,6 @@ namespace IsosurfaceGeneration
 
         public float SampleDensity(int3 index)
         {
-            // TODO: Interpolate between corner samples?
-
             ComputeIndices(index, out int3 chunkIndex, out int3 cellIndex);
             return m_Chunks[IndexHelper.Wrap(chunkIndex, m_Dimentions)].DensityMap.Sample(cellIndex);
         }
@@ -373,12 +383,12 @@ namespace IsosurfaceGeneration
             float y = Mathf.Clamp(index.y, 0, (m_Dimentions.y * m_ChunkSize) - 0.001f);
             float z = Mathf.Clamp(index.z, 0, (m_Dimentions.z * m_ChunkSize) - 0.001f);
 
-            // Compute chunk array wrappedIndex.
+            // Compute chunk array index.
             chunkIndex.x = Mathf.FloorToInt(x / m_ChunkSize);
             chunkIndex.y = Mathf.FloorToInt(y / m_ChunkSize);
             chunkIndex.z = Mathf.FloorToInt(z / m_ChunkSize);
 
-            // Compute density map wrappedIndex.
+            // Compute density map index.
             cellIndex.x = Mathf.FloorToInt(x - (chunkIndex.x * m_ChunkSize));
             cellIndex.y = Mathf.FloorToInt(y - (chunkIndex.y * m_ChunkSize));
             cellIndex.z = Mathf.FloorToInt(z - (chunkIndex.z * m_ChunkSize));
@@ -392,6 +402,13 @@ namespace IsosurfaceGeneration
             int z = Mathf.FloorToInt(positionLS.z);
 
             return new int3(x, y, z);
+        }
+
+        bool ChunkInBounds(int3 index)
+        {
+            return index.x >= 0 && index.x < m_Dimentions.x &&
+                   index.y >= 0 && index.y < m_Dimentions.y &&
+                   index.z >= 0 && index.z < m_Dimentions.z;
         }
 
 #if UNITY_EDITOR
@@ -412,37 +429,6 @@ namespace IsosurfaceGeneration
             PropertyChanged = true;
         }
 #endif
-
-        readonly int3[] k_AdjacentChunkIndices = new int3[27]
-        {
-            new(-1, -1, -1),
-            new(-1, -1, 0),
-            new(-1, -1, 1),
-            new(-1, 0, -1),
-            new(-1, 0, 0),
-            new(-1, 0, 1),
-            new(-1, 1, -1),
-            new(-1, 1, 0),
-            new(-1, 1, 1),
-            new(0, -1, -1),
-            new(0, -1, 0),
-            new(0, -1, 1),
-            new(0, 0, -1),
-            new(0, 0, 0),
-            new(0, 0, 1),
-            new(0, 1, -1),
-            new(0, 1, 0),
-            new(0, 1, 1),
-            new(1, -1, -1),
-            new(1, -1, 0),
-            new(1, -1, 1),
-            new(1, 0, -1),
-            new(1, 0, 0),
-            new(1, 0, 1),
-            new(1, 1, -1),
-            new(1, 1, 0),
-            new(1, 1, 1)
-        };
     }
 
     public enum IcosurfaceGenerationMethod
@@ -455,8 +441,9 @@ namespace IsosurfaceGeneration
 
     public enum DensityGenerationMethod
     {
-        SingleThreaded,
-        Jobs
+        Recompute,
+        RecomputeJobs,
+        UseShapeVolumesJobs
     }
 
     public enum ChunkCellDimentions
@@ -464,26 +451,5 @@ namespace IsosurfaceGeneration
         Low8,
         Medium16,
         High32
-    }
-
-    public struct Shape
-    {
-        public Matrix4x4 matrix; // TODO: float4x4
-        public ShapeFuncion shapeID;
-        public BlendMode blendMode;
-        public float sharpness;
-        public float dimention1;
-        public float dimention2;
-    }
-
-    public enum ShapeFuncion
-    {
-        Sphere
-    }
-
-    public enum BlendMode
-    {
-        Additive,
-        Subtractive
     }
 }

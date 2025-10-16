@@ -3,13 +3,12 @@ using System;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace IsosurfaceGeneration
 {
     public struct DensityMap : IDisposable
     {
-        public NativeArray<float> density; // TODO: convert to sbyte array.
+        public NativeArray<float> density;
         public readonly int pointsPerAxis;
         public readonly int totalPoints => pointsPerAxis * pointsPerAxis * pointsPerAxis;
 
@@ -45,12 +44,30 @@ namespace IsosurfaceGeneration
         {
             switch (method)
             {
-                case DensityGenerationMethod.SingleThreaded:
+                case DensityGenerationMethod.Recompute:
                     RecomputeDensity(initialValue, shapes);
                     break;
 
-                case DensityGenerationMethod.Jobs:
+                case DensityGenerationMethod.RecomputeJobs:
                     RecomputeDensity_Jobs(initialValue, shapes);
+                    break;
+            }
+        }
+
+        public void FillDensityMap(float value, DensityGenerationMethod method)
+        {
+            switch (method)
+            {
+                case DensityGenerationMethod.Recompute:
+                    FillDensity(value);
+                    break;
+
+                case DensityGenerationMethod.RecomputeJobs:
+                    FillDensity_Jobs(value);
+                    break;
+
+                case DensityGenerationMethod.UseShapeVolumesJobs:
+                    FillDensity_Jobs(value);
                     break;
             }
         }
@@ -62,17 +79,27 @@ namespace IsosurfaceGeneration
         {
             switch (method)
             {
-                case DensityGenerationMethod.SingleThreaded:
+                case DensityGenerationMethod.Recompute:
                     ApplyShape(shape);
                     break;
 
-                case DensityGenerationMethod.Jobs:
+                case DensityGenerationMethod.RecomputeJobs:
+                    ApplyShape_Jobs(shape);
+                    break;
+
+                case DensityGenerationMethod.UseShapeVolumesJobs:
                     ApplyShape_Jobs(shape);
                     break;
             }
         }
 
         #region Single Threaded
+        void FillDensity(float value)
+        {
+            for (int i = 0; i < density.Length; i++)
+                density[i] = value;
+        }
+
         void RecomputeDensity(float value, NativeArray<Shape> shapeQueue)
         {
             for (int i = 0; i < density.Length; i++)
@@ -81,19 +108,18 @@ namespace IsosurfaceGeneration
 
                 foreach (Shape shape in shapeQueue)
                 {
-                    int3 uwrappedIndex = IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex;
-                    Vector3 samplePos = shape.matrix.MultiplyPoint(new Vector3(uwrappedIndex.x, uwrappedIndex.y, uwrappedIndex.z));
+                    float4 pos = new(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex, 1);
+                    pos = math.mul(shape.matrix, pos);
 
                     float distance = 0;
                     switch (shape.shapeID)
                     {
                         case ShapeFuncion.Sphere:
-                            distance = DistanceFunction.Sphere(samplePos, shape.dimention1);
+                            distance = DistanceFunction.Sphere(new float3(pos.x, pos.y, pos.z), shape.dimention1);
                             break;
                     }
 
-                    float mult = shape.blendMode == BlendMode.Subtractive ? -1.0f : 1.0f;
-                    density[i] = DistanceFunction.SmoothMax(-distance, density[i] * mult, shape.sharpness) * mult;
+                    DensityHelpers.ApplyDistanceFunction(density, i, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
                 }
             }
         }
@@ -102,33 +128,43 @@ namespace IsosurfaceGeneration
         {
             for (int i = 0; i < density.Length; i++)
             {
-                int3 uwrappedIndex = IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex;
-                Vector3 samplePos = shape.matrix.MultiplyPoint(new Vector3(uwrappedIndex.x, uwrappedIndex.y, uwrappedIndex.z));
+                float4 pos = new(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex, 1);
+                pos = math.mul(shape.matrix, pos);
 
                 float distance = 0;
                 switch (shape.shapeID)
                 {
                     case ShapeFuncion.Sphere:
-                        distance = DistanceFunction.Sphere(samplePos, shape.dimention1);
+                        distance = DistanceFunction.Sphere(new float3(pos.x, pos.y, pos.z), shape.dimention1);
                         break;
                 }
 
-                float mult = shape.blendMode == BlendMode.Subtractive ? -1.0f : 1.0f;
-                density[i] = DistanceFunction.SmoothMax(-distance, density[i] * mult, shape.sharpness) * mult;
+                DensityHelpers.ApplyDistanceFunction(density, i, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
             }
         }
         #endregion
 
         #region Jobs
-        void RecomputeDensity_Jobs(float value, NativeArray<Shape> shapeQueue)
+        void FillDensity_Jobs(float value)
+        {
+            FillDensityJob fillDensityJob = new()
+            {
+                density = density,
+                value = value
+            };
+
+            fillDensityJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+        }
+
+        void RecomputeDensity_Jobs(float initialValue, NativeArray<Shape> shapeQueue)
         {
             RecomputeDensityJob recomputeDensityJob = new()
             {
                 density = density,
-                initValue = value,
-                shapes = shapeQueue,
                 pointsPerAxis = pointsPerAxis,
-                chunkOriginIndex = chunkOriginIndex
+                chunkOriginIndex = chunkOriginIndex,
+                initialValue = initialValue,
+                shapes = shapeQueue
             };
 
             recomputeDensityJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
@@ -136,20 +172,20 @@ namespace IsosurfaceGeneration
 
         void ApplyShape_Jobs(Shape shape)
         {
-            bool subtractive = shape.blendMode == BlendMode.Subtractive;
-
             switch (shape.shapeID)
             {
                 case ShapeFuncion.Sphere:
                     ApplyShereJob applyShapeJob = new()
                     {
                         density = density,
-                        matrix = shape.matrix,
-                        radius = shape.dimention1,
-                        sharpness = shape.sharpness,
-                        subtractive = subtractive,
                         pointsPerAxis = pointsPerAxis,
                         chunkOriginIndex = chunkOriginIndex,
+
+                        matrix = shape.matrix,
+                        sharpness = shape.sharpness,
+                        subtractive = shape.blendMode == BlendMode.Subtractive,
+                        
+                        radius = shape.dimention1
                     };
 
                     applyShapeJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
@@ -165,5 +201,26 @@ namespace IsosurfaceGeneration
         {
             return density[IndexHelper.Wrap(index, pointsPerAxis)];
         }
+    }
+
+    struct DensityHelpers
+    {
+        public static void ApplyDistanceFunction(NativeArray<float> density, int index, float distance, float sharpness, bool subtractive)
+        {
+            // To avoid a branch here, we can use math.select to create a -1 multiplier in subtractive cases.
+            // In this case, we want to use a smooth min function, which can be attained by negating the inputs to smooth max, and then negating the result.
+            float mult = math.select(1.0f, -1.0f, subtractive);
+            density[index] = SmoothMax(-distance, density[index] * mult, sharpness) * mult;
+        }
+
+        static float SmoothMax(float a, float b, float k)
+        {
+            return math.log(math.exp(k * a) + math.exp(k * b)) / k;
+        }
+
+        //static float SmoothMin(float a, float b, float k)
+        //{
+        //    return -SmoothMax(-a, -b, k);
+        //}
     }
 }
