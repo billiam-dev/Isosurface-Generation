@@ -64,40 +64,34 @@ namespace IsosurfaceGeneration.Meshing
 
         void MakeQuad(int3 index, int axisIndex)
         {
-            int3[] points = new int3[4]
-            {
-                index + NetsTables.QuadPoints[axisIndex][0],
-                index + NetsTables.QuadPoints[axisIndex][1],
-                index + NetsTables.QuadPoints[axisIndex][2],
-                index + NetsTables.QuadPoints[axisIndex][3]
-            };
+            int3 point1 = index + NetsTables.QuadPoints[axisIndex][0];
+            int3 point2 = index + NetsTables.QuadPoints[axisIndex][1];
+            int3 point3 = index + NetsTables.QuadPoints[axisIndex][2];
+            int3 point4 = index + NetsTables.QuadPoints[axisIndex][3];
 
-            GetOrMakeVertex(points[0]);
-            GetOrMakeVertex(points[1]);
-            GetOrMakeVertex(points[2]);
+            GetOrMakeVertex(point1);
+            GetOrMakeVertex(point2);
+            GetOrMakeVertex(point3);
 
-            GetOrMakeVertex(points[2]);
-            GetOrMakeVertex(points[3]);
-            GetOrMakeVertex(points[0]);
+            GetOrMakeVertex(point3);
+            GetOrMakeVertex(point4);
+            GetOrMakeVertex(point1);
         }
 
         void MakeQuad_Reversed(int3 index, int axisIndex)
         {
-            int3[] points = new int3[4]
-            {
-                index + NetsTables.QuadPoints[axisIndex][0],
-                index + NetsTables.QuadPoints[axisIndex][1],
-                index + NetsTables.QuadPoints[axisIndex][2],
-                index + NetsTables.QuadPoints[axisIndex][3]
-            };
+            int3 point1 = index + NetsTables.QuadPoints[axisIndex][0];
+            int3 point2 = index + NetsTables.QuadPoints[axisIndex][1];
+            int3 point3 = index + NetsTables.QuadPoints[axisIndex][2];
+            int3 point4 = index + NetsTables.QuadPoints[axisIndex][3];
 
-            GetOrMakeVertex(points[2]);
-            GetOrMakeVertex(points[1]);
-            GetOrMakeVertex(points[0]);
+            GetOrMakeVertex(point3);
+            GetOrMakeVertex(point2);
+            GetOrMakeVertex(point1);
 
-            GetOrMakeVertex(points[0]);
-            GetOrMakeVertex(points[3]);
-            GetOrMakeVertex(points[2]);
+            GetOrMakeVertex(point1);
+            GetOrMakeVertex(point4);
+            GetOrMakeVertex(point3);
         }
 
         void GetOrMakeVertex(int3 index)
@@ -115,54 +109,49 @@ namespace IsosurfaceGeneration.Meshing
             }
         }
 
-        Vector3 CalculateSurfacePosition(int3 index)
+        float3 CalculateSurfacePosition(int3 coord)
         {
-            Vector3 position = Vector3.zero;
+            float3 position = 0.0f;
             int surfaceEdgeCount = 0;
 
             for (int i = 0; i < NetsTables.Edges.Length; i++)
             {
                 int3[] edgeOffsets = NetsTables.Edges[i];
 
-                Vector3 positionA = Int3ToVector3(index + edgeOffsets[0]);
-                Vector3 positionB = Int3ToVector3(index + edgeOffsets[1]);
+                float3 positionA = coord + edgeOffsets[0];
+                float3 positionB = coord + edgeOffsets[1];
 
-                float densityA = surface.SampleDensity(chunkOriginIndex + index + edgeOffsets[0]);
-                float densityB = surface.SampleDensity(chunkOriginIndex + index + edgeOffsets[1]);
+                float densityA = surface.SampleDensity(chunkOriginIndex + coord + edgeOffsets[0]);
+                float densityB = surface.SampleDensity(chunkOriginIndex + coord + edgeOffsets[1]);
 
                 if (densityA * densityB <= 0)
                 {
-                    position += Vector3.Lerp(positionA, positionB, Mathf.Abs(densityA) / (Mathf.Abs(densityA) + Mathf.Abs(densityB)));
+                    position += math.lerp(positionA, positionB, math.abs(densityA) / (math.abs(densityA) + math.abs(densityB)));
                     surfaceEdgeCount++;
                 }
             }
 
             if (surfaceEdgeCount == 0)
-                return new Vector3(index.x, index.y, index.z) + (Vector3.one * 0.5f);
+                return (float3)coord + 0.5f;
 
             return position / surfaceEdgeCount;
         }
 
-        Vector3 CalculateNormal(int3 index)
+        float3 CalculateNormal(int3 coord)
         {
-            int3 samplePos = chunkOriginIndex + index;
+            int3 samplePos = chunkOriginIndex + coord;
 
-            float dx = surface.SampleDensity(samplePos - NetsTables.Axis[0]) - surface.SampleDensity(samplePos + NetsTables.Axis[0]);
-            float dy = surface.SampleDensity(samplePos - NetsTables.Axis[1]) - surface.SampleDensity(samplePos + NetsTables.Axis[1]);
-            float dz = surface.SampleDensity(samplePos - NetsTables.Axis[2]) - surface.SampleDensity(samplePos + NetsTables.Axis[2]);
+            float3 normal;
+            normal.x = surface.SampleDensity(samplePos - NetsTables.Axis[0]) - surface.SampleDensity(samplePos + NetsTables.Axis[0]);
+            normal.y = surface.SampleDensity(samplePos - NetsTables.Axis[1]) - surface.SampleDensity(samplePos + NetsTables.Axis[1]);
+            normal.z = surface.SampleDensity(samplePos - NetsTables.Axis[2]) - surface.SampleDensity(samplePos + NetsTables.Axis[2]);
 
-            return new Vector3(dx, dy, dz).normalized;
-        }
-
-        Vector3 Int3ToVector3(int3 i)
-        {
-            return new Vector3(i.x, i.y, i.z);
+            return math.normalize(normal);
         }
     }
     #endregion
 
     #region Jobs Mesher
-
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct SurfaceNetsMesherJob : IJobFor
     {
@@ -267,8 +256,8 @@ namespace IsosurfaceGeneration.Meshing
             {
                 int3[] edgeOffsets = NetsTables.Edges[i];
 
-                float3 positionA = new(coord + edgeOffsets[0]);
-                float3 positionB = new(coord + edgeOffsets[1]);
+                float3 positionA = coord + edgeOffsets[0];
+                float3 positionB = coord + edgeOffsets[1];
 
                 float densityA = density[IndexHelper.Wrap(coord + edgeOffsets[0], densityPPA)];
                 float densityB = density[IndexHelper.Wrap(coord + edgeOffsets[1], densityPPA)];
@@ -281,24 +270,19 @@ namespace IsosurfaceGeneration.Meshing
             }
 
             if (surfaceEdgeCount == 0)
-                return new float3(coord) + 0.5f;
+                return (float3)coord + 0.5f;
 
             return position / surfaceEdgeCount;
         }
 
         float3 CalculateNormal(int3 coord)
         {
-            // TODO: Surface Nets JOBS normals are totally broken.
-            return new float3(0, 1, 0);
-
-            /*
             float3 normal;
             normal.x = density[IndexHelper.Wrap(coord - NetsTables.Axis[0], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[0], densityPPA)];
             normal.y = density[IndexHelper.Wrap(coord - NetsTables.Axis[1], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[1], densityPPA)];
             normal.z = density[IndexHelper.Wrap(coord - NetsTables.Axis[2], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[2], densityPPA)];
 
             return math.normalize(normal);
-            */
         }
     }
 

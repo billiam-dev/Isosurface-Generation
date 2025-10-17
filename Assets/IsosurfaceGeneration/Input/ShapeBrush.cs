@@ -58,15 +58,15 @@ namespace IsosurfaceGeneration.Input
         bool m_PropertyChanged;
         int m_OrderInQueue = -1;
 
-        public Shape GetShapeProperties()
+        public Shape GetShapeProperties(Isosurface surface)
         {
-            float3 pos = new(transform.localPosition.x, transform.localPosition.y, transform.localPosition.z);
-            quaternion rot = new(transform.localRotation.x, transform.localRotation.y, transform.localRotation.z, transform.localRotation.w);
-            float3 scale = new(transform.localScale.x, transform.localScale.y, transform.localScale.z);
+            Vector3 pos = transform.position - surface.transform.position;
+            // TODO: make rest of matrix local
+            AffineTransform matrix = new((float3)pos, (quaternion)transform.rotation, (float3)transform.lossyScale);
 
             return new Shape()
             {
-                matrix = math.inverse(new AffineTransform(pos, rot, scale)),
+                matrix = math.inverse(matrix),
                 shapeID = Shape,
                 blendMode = BlendMode,
                 sharpness = Sharpness,
@@ -89,16 +89,16 @@ namespace IsosurfaceGeneration.Input
 
         public void DrawChunkVolume(Isosurface isosurface)
         {
-            int3 chunkVolume = GetShapeProperties().ComputeChunkVolume(isosurface);
+            int3 chunkVolume = GetShapeProperties(isosurface).ComputeChunkVolume(isosurface);
             isosurface.ComputeIndices(transform.position, out int3 chunkIndex, out int3 densityIndex);
 
-            Vector3 centre = new Vector3(chunkIndex.x, chunkIndex.y, chunkIndex.z) + (Vector3.one / 2.0f);
+            Vector3 centre = new(chunkIndex.x, chunkIndex.y, chunkIndex.z);
             centre *= isosurface.ChunkSizeCells;
 
-            Vector3 size = new Vector3(chunkVolume.x, chunkVolume.y, chunkVolume.z);
+            Vector3 size = new(chunkVolume.x, chunkVolume.y, chunkVolume.z);
             size *= isosurface.ChunkSizeCells;
 
-            Gizmos.DrawWireCube(centre, size);
+            Gizmos.DrawWireCube(isosurface.transform.TransformPoint(centre), size);
         }
 #endif
     }

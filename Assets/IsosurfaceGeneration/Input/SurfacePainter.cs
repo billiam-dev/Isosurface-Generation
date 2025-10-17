@@ -43,7 +43,7 @@ namespace IsosurfaceGeneration.Input
         GameObject m_Pointer;
         float m_LastInputTime;
 
-        const float k_BushSizeScrollSpeed = 50.0f;
+        const float k_BushSizeScrollSpeed = 75.0f;
 
         void OnEnable()
         {
@@ -96,9 +96,13 @@ namespace IsosurfaceGeneration.Input
 
         void ApplyShape(Isosurface surface, Vector3 position, BlendMode blendMode)
         {
+            Vector3 pos = position - surface.transform.position;
+            // TODO: make rest of matrix local
+            AffineTransform matrix = new((float3)pos, quaternion.identity, 1.0f);
+
             Shape shape = new()
             {
-                matrix = math.inverse(new AffineTransform(new float3(position), quaternion.identity, 1.0f)),
+                matrix = math.inverse(matrix),
                 shapeID = ShapeFuncion.Sphere,
                 blendMode = blendMode,
                 sharpness = m_Sharpness,

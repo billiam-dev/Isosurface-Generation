@@ -5,7 +5,8 @@ namespace IsosurfaceGeneration
 {
     public struct Shape
     {
-        public AffineTransform matrix;
+        public AffineTransform matrix; // worldToLocal
+        public AffineTransform inverseMatrix => math.inverse(matrix); // localToWorld
         public ShapeFuncion shapeID;
         public BlendMode blendMode;
         public float sharpness;
@@ -31,7 +32,7 @@ namespace IsosurfaceGeneration
 
         public float3 TransformPosition(float3 position)
         {
-            float4 transformedPos = math.mul(matrix, new float4(position, 1));
+            float4 transformedPos = math.mul(matrix, new float4(position, 1)); // The input position is in local space, attained via the index of the voxels, so we multiply it by the shape's worldToLocal matrix.
             return new float3(transformedPos.x, transformedPos.y, transformedPos.z);
         }
 

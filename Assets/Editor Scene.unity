@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
+  m_Sun: {fileID: 1550770277}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -119,55 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &61039938
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 61039940}
-  - component: {fileID: 61039939}
-  m_Layer: 0
-  m_Name: '-1: Sphere Brush (Additive)'
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &61039939
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 61039938}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
-  Shape: 0
-  BlendMode: 0
-  Sharpness: 1
-  Dimention1: 34
-  Dimention2: 4
---- !u!4 &61039940
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 61039938}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 128, y: 128, z: 128}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2129895804}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &105366884
 GameObject:
   m_ObjectHideFlags: 1
@@ -305,7 +256,7 @@ MonoBehaviour:
   Shape: 3
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 30
+  Dimention1: 26
   Dimention2: 4
 --- !u!4 &372619559
 Transform:
@@ -315,13 +266,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 372619557}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.19128206, y: -0.19128263, z: -0.6807421, w: 0.68074405}
-  m_LocalPosition: {x: 34.582355, y: 36.5, z: 89.82484}
+  m_LocalRotation: {x: 0.20082921, y: -0.20082921, z: -0.67798793, w: 0.67798793}
+  m_LocalPosition: {x: 41.6, y: 37.6, z: 89.6}
   m_LocalScale: {x: 0.83458, y: 1, z: 0.71486}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 975179716}
-  m_LocalEulerAnglesHint: {x: 0, y: -31.39, z: -90}
+  m_LocalEulerAnglesHint: {x: 0, y: -33, z: -90}
 --- !u!1 &463586068
 GameObject:
   m_ObjectHideFlags: 1
@@ -952,7 +903,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  SendLogMessages: 1
+  SendLogMessages: 0
 --- !u!4 &975179716
 Transform:
   m_ObjectHideFlags: 0
@@ -962,7 +913,7 @@ Transform:
   m_GameObject: {fileID: 975179713}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 32}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1092,7 +1043,7 @@ GameObject:
   - component: {fileID: 1024668778}
   - component: {fileID: 1024668777}
   m_Layer: 0
-  m_Name: '3: Sphere Brush (Subtractive)'
+  m_Name: '3: Capsule Brush (Subtractive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1110,11 +1061,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
-  Shape: 0
+  Shape: 2
   BlendMode: 1
   Sharpness: 0.8
-  Dimention1: 4.1
-  Dimention2: 6.3448896
+  Dimention1: 7.92
+  Dimention2: 3.06
 --- !u!4 &1024668778
 Transform:
   m_ObjectHideFlags: 0
@@ -1124,7 +1075,7 @@ Transform:
   m_GameObject: {fileID: 1024668776}
   serializedVersion: 2
   m_LocalRotation: {x: -0.38202024, y: -0.25657934, z: -0.1003199, w: 0.8821358}
-  m_LocalPosition: {x: 81.09427, y: 57.47, z: 27.053986}
+  m_LocalPosition: {x: 79.38, y: 54.3, z: 29.92}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1841,8 +1792,8 @@ MonoBehaviour:
   Shape: 2
   BlendMode: 0
   Sharpness: 0.8
-  Dimention1: 8.037558
-  Dimention2: 6.3448896
+  Dimention1: 16
+  Dimention2: 6
 --- !u!4 &1416525995
 Transform:
   m_ObjectHideFlags: 0
@@ -1853,7 +1804,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0.38202024, y: -0.25657934, z: -0.1003199, w: 0.8821358}
   m_LocalPosition: {x: 77.41571, y: 50.600002, z: 33.25564}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 975179716}
@@ -1963,55 +1914,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1484929221
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1484929223}
-  - component: {fileID: 1484929222}
-  m_Layer: 0
-  m_Name: '-1: Sphere Brush (Additive)'
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1484929222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1484929221}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
-  Shape: 0
-  BlendMode: 0
-  Sharpness: 1
-  Dimention1: 12
-  Dimention2: 4
---- !u!4 &1484929223
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1484929221}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 16, y: 16, z: 16}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2129895804}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1550112368
 GameObject:
   m_ObjectHideFlags: 0
@@ -2028,7 +1930,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1550112369
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2071,6 +1973,7 @@ GameObject:
   - component: {fileID: 1550291596}
   - component: {fileID: 1550291598}
   - component: {fileID: 1550291595}
+  - component: {fileID: 1550291601}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -2095,8 +1998,8 @@ Camera:
   m_GameObject: {fileID: 1550291594}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.682, g: 0.6210882, b: 0.50808996, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -2146,7 +2049,7 @@ Transform:
   m_GameObject: {fileID: 1550291594}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 160, y: 48, z: 64}
+  m_LocalPosition: {x: 180, y: 60, z: 64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2227,8 +2130,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2364a15fef7f2284099b7ca0ffb633eb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FreeCamera
-  MoveSpeed: 10
+  Acceleration: 5
   MouseSensitivity: 0.3
+--- !u!114 &1550291601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1550291594}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cdb833786f6d4b48950da2feb5d1f43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FPSCounter
 --- !u!1 &1550770276
 GameObject:
   m_ObjectHideFlags: 0
@@ -2320,13 +2235,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1550770276}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3696438, y: -0.23911758, z: 0.099045746, w: 0.89239913}
+  m_LocalRotation: {x: 0.09904577, y: -0.89239913, z: 0.36964378, w: 0.23911767}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 45, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 45, y: -150, z: 0}
 --- !u!114 &1550770279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2472,7 +2387,7 @@ GameObject:
   - component: {fileID: 1669996629}
   - component: {fileID: 1669996628}
   m_Layer: 0
-  m_Name: '-1: Sphere Brush (Additive)'
+  m_Name: '0: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2493,7 +2408,7 @@ MonoBehaviour:
   Shape: 0
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 8
+  Dimention1: 14.085001
   Dimention2: 4
 --- !u!4 &1669996629
 Transform:
@@ -3505,7 +3420,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  SendLogMessages: 1
+  SendLogMessages: 0
 --- !u!114 &1992562660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3674,79 +3589,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2129895801
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2129895804}
-  - component: {fileID: 2129895803}
-  - component: {fileID: 2129895805}
-  m_Layer: 0
-  m_Name: Large Surface
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &2129895803
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2129895801}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 55795169391e3d247ad050f865be483b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
-  MeshingMethod: 1
-  DensityMethod: 2
-  Dimentions:
-    x: 8
-    y: 8
-    z: 8
-  ChunkSize: 2
-  IsoLevel: 0
-  InvertSurface: 0
-  Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  SendLogMessages: 1
---- !u!4 &2129895804
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2129895801}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1484929223}
-  - {fileID: 61039940}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2129895805
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2129895801}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5cb754568eb328f428a0950fe675b57b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::IsosurfaceGeneration.Input.RealtimeShapesInput
-  m_Brushes:
-  - {fileID: 1484929222}
-  - {fileID: 61039939}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -3779,4 +3621,3 @@ SceneRoots:
   - {fileID: 1000737261}
   - {fileID: 1992031554}
   - {fileID: 975179716}
-  - {fileID: 2129895804}

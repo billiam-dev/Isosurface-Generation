@@ -1,4 +1,3 @@
-#if UNITY_EDITOR
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -8,6 +7,7 @@ namespace IsosurfaceGeneration.Debugging
     [ExecuteInEditMode]
     public class ChunkViewer : MonoBehaviour
     {
+#if UNITY_EDITOR
         public Isosurface Surface;
         GUIStyle m_Style;
 
@@ -41,6 +41,6 @@ namespace IsosurfaceGeneration.Debugging
 
             Handles.Label(transform.position, label, m_Style);
         }
+#endif
     }
 }
-#endif

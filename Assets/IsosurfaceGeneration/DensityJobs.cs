@@ -18,7 +18,6 @@ namespace IsosurfaceGeneration
         }
     }
 
-
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct RecomputeDensityJob : IJobParallelFor
     {
@@ -41,8 +40,7 @@ namespace IsosurfaceGeneration
         }
     }
 
-    // Individual shape jobs, much more performant to switch once when scheduling the job, than on every cell.
-    // An implementation that does not have all these various density map options should just use these kernals.
+    // Individual shape jobs, much more performant to perform the switch outside of the job.
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct ApplyShereJob : IJobParallelFor
     {

@@ -3,18 +3,21 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class FreeCamera : MonoBehaviour
 {
-    [Range(1f, 20f)]
-    public float MoveSpeed = 10;
+    [Range(1f, 21f)]
+    public float Acceleration = 5.0f;
 
     [Range(0.1f, 1f)]
     public float MouseSensitivity = 0.3f;
 
     Vector3 m_Rotation;
+    Vector3 m_Velocity;
 
     void OnEnable()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        m_Rotation = transform.localEulerAngles;
     }
 
     void OnDisable()
@@ -23,10 +26,13 @@ public class FreeCamera : MonoBehaviour
         Cursor.visible = false;
     }
 
-    void LateUpdate()
+    void Update()
     {
         HandleMove();
         HandleLook();
+
+        transform.localPosition += m_Velocity;
+        m_Velocity *= 0.95f;
     }
 
     void HandleMove()
@@ -41,7 +47,7 @@ public class FreeCamera : MonoBehaviour
         if (descendHeld) move -= new Vector3(0, 1);
         if (ascendHeld) move += new Vector3(0, 1);
 
-        transform.localPosition += MoveSpeed * Time.deltaTime * move;
+        m_Velocity += Acceleration * Time.deltaTime * move;
     }
 
     void HandleLook()

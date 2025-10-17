@@ -1,22 +1,97 @@
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
 namespace IsosurfaceGeneration.Input
 {
-    public class RealtimeShapesInput : SurfaceInput
+    [ExecuteInEditMode]
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(Isosurface))]
+    public class RealtimeShapesInput : MonoBehaviour
     {
+        Isosurface m_Isosurface;
+
+        NativeList<Shape> m_ShapeQueue;
+        bool m_RecomputeSurface;
+
+        int3 m_CurrentDimentions;
+        ChunkCellDimentions m_CurrentChunkSize;
+        IcosurfaceGenerationMethod m_CurrentMeshingMethod;
+
         [SerializeField]
         ShapeBrush[] m_Brushes;
 
-        int m_NumBrushes;
+        int m_NumBrushes = -1;
 
-        public override void OnDisable()
+        void OnEnable()
         {
-            base.OnDisable();
-            m_NumBrushes = 0;
+            m_ShapeQueue = new(10, Allocator.Persistent);
+            m_Isosurface = GetComponent<Isosurface>();
+#if UNITY_EDITOR
+            EditorApplication.update += UpdateSurface;
+#endif
+            ReinitSurface();
         }
 
-        internal override void EvaluatePropertyChanged()
+        void OnDisable()
+        {
+#if UNITY_EDITOR
+            EditorApplication.update -= UpdateSurface;
+#endif
+            DestroySurface();
+            m_ShapeQueue.Dispose();
+            m_NumBrushes = -1;
+        }
+
+#if !UNITY_EDITOR
+        void Update()
+        {
+            UpdateSurface();
+        }
+#endif
+
+        void UpdateSurface()
+        {
+            if (m_CurrentMeshingMethod != m_Isosurface.MeshingMethod ||
+                m_Isosurface.Dimentions.x != m_CurrentDimentions.x ||
+                m_Isosurface.Dimentions.y != m_CurrentDimentions.y ||
+                m_Isosurface.Dimentions.z != m_CurrentDimentions.z ||
+                m_Isosurface.ChunkSize != m_CurrentChunkSize)
+                ReinitSurface();
+
+            if (m_Isosurface.PropertyChanged)
+            {
+                m_RecomputeSurface = true;
+                m_Isosurface.PropertyChanged = false;
+            }
+
+            EvaluatePropertyChanged();
+
+            if (m_RecomputeSurface)
+                m_Isosurface.Recompute(m_ShapeQueue.AsArray());
+
+            m_RecomputeSurface = false;
+        }
+
+        void ReinitSurface()
+        {
+            m_Isosurface.Destroy();
+            m_Isosurface.Generate();
+
+            m_CurrentMeshingMethod = m_Isosurface.MeshingMethod;
+            m_CurrentDimentions = m_Isosurface.Dimentions;
+            m_CurrentChunkSize = m_Isosurface.ChunkSize;
+
+            EvaluatePropertyChanged();
+        }
+
+        void DestroySurface()
+        {
+            m_Isosurface.Destroy();
+        }
+
+        void EvaluatePropertyChanged()
         {
             m_ShapeQueue.Clear();
             m_Brushes = GetComponentsInChildren<ShapeBrush>();
@@ -41,7 +116,7 @@ namespace IsosurfaceGeneration.Input
                 }
 
                 // Add brush to shape queue.
-                m_ShapeQueue.Add(shaper.GetShapeProperties());
+                m_ShapeQueue.Add(shaper.GetShapeProperties(m_Isosurface));
             }
 
             // Evaluate changes in queue length.

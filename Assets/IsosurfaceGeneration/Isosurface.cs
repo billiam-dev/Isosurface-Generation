@@ -118,7 +118,7 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void Recompute(NativeArray<Shape> shapeQueue)
         {
-            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble;
+            BeginProfiler(ref m_DensityTimestamp);
             float baseDensity = InvertSurface ? 32.0f : -32.0f;
 
             if (DensityMethod == DensityGenerationMethod.Recompute || DensityMethod == DensityGenerationMethod.RecomputeJobs)
@@ -127,7 +127,7 @@ namespace IsosurfaceGeneration
                 for (int i = 0; i < m_Chunks.Length; i++)
                     m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, DensityMethod);
 
-                m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
+                EndProfilier(ref m_DensityTimestamp);
 
                 // Update effected chunks
                 m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
@@ -156,13 +156,13 @@ namespace IsosurfaceGeneration
                             updateChunks.Add(effectedChunks[j]);
                 }
 
-                m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
+                EndProfilier(ref m_DensityTimestamp);
 
                 // Update effected chunks
-                m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
+                BeginProfiler(ref m_MeshTimestamp);
                 foreach (int index in updateChunks)
                     UpdateChunk(index);
-                m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
+                EndProfilier(ref m_MeshTimestamp);
 
                 if (SendLogMessages)
                     LogTimestamps(updateChunks.Count);
@@ -174,22 +174,22 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void ApplyShape(Shape shape)
         {
-            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble;
+            BeginProfiler(ref m_DensityTimestamp);
             ApplyShapeWithBoundingVolume(shape, out List<int> effectedChunks);
-            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
+            EndProfilier(ref m_DensityTimestamp);
 
-            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
+            BeginProfiler(ref m_MeshTimestamp);
             foreach (int index in effectedChunks)
                 UpdateChunk(index);
-            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
+            EndProfilier(ref m_MeshTimestamp);
 
             if (SendLogMessages)
                 LogTimestamps(effectedChunks.Count);
         }
 
         void ApplyShapeWithBoundingVolume(Shape shape, out List<int> effectedChunks)
-        {
-            ComputeIndices(WorldPositionToIndex(math.inverse(shape.matrix).t), out int3 chunkIndex, out _);
+        {            
+            ComputeIndices(PositionToIndex(shape.inverseMatrix.t), out int3 chunkIndex, out _);
 
             effectedChunks = new();
             int3 chunkVolume = shape.ComputeChunkVolume(this);
@@ -357,7 +357,7 @@ namespace IsosurfaceGeneration
         /// </summary>
         public float SampleDensity(Vector3 positionWS)
         {
-            return SampleDensity(WorldPositionToIndex(positionWS));
+            return SampleDensity(PositionToIndex(positionWS));
         }
 
 #if UNITY_EDITOR
@@ -367,7 +367,7 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void ComputeIndices(Vector3 positionWS, out int3 chunkIndex, out int3 densityIndex)
         {
-            ComputeIndices(WorldPositionToIndex(positionWS), out chunkIndex, out densityIndex);
+            ComputeIndices(PositionToIndex(positionWS), out chunkIndex, out densityIndex);
         }
 
         /// <summary>
@@ -404,12 +404,11 @@ namespace IsosurfaceGeneration
             cellIndex.z = Mathf.FloorToInt(z - (chunkIndex.z * m_ChunkSize));
         }
 
-        int3 WorldPositionToIndex(Vector3 positionWS)
+        int3 PositionToIndex(Vector3 positionWS)
         {
-            Vector3 positionLS = transform.InverseTransformPoint(positionWS);
-            int x = Mathf.FloorToInt(positionLS.x);
-            int y = Mathf.FloorToInt(positionLS.y);
-            int z = Mathf.FloorToInt(positionLS.z);
+            int x = Mathf.FloorToInt(positionWS.x);
+            int y = Mathf.FloorToInt(positionWS.y);
+            int z = Mathf.FloorToInt(positionWS.z);
 
             return new int3(x, y, z);
         }
@@ -440,9 +439,44 @@ namespace IsosurfaceGeneration
         }
 #endif
 
+        const float k_Width = 100;
+        const float k_Height = 24;
+        const float k_Margin = 20;
+        Rect m_TextAreaRect;
+        GUIStyle m_Style;
+
+        void OnGUI()
+        {
+            if (m_TextAreaRect == null)
+                m_TextAreaRect = new(k_Margin, k_Margin, k_Width, k_Height);
+
+            if (m_Style == null)
+                m_Style = new GUIStyle()
+                {
+                    normal = new GUIStyleState()
+                    {
+                        textColor = Color.white,
+                    },
+                    fontSize = 24
+                };
+
+            GUI.enabled = false;
+            GUI.TextField(m_TextAreaRect, $"\n{ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)}\nd: {ToMilliseconds(m_DensityTimestamp)}\nm: {ToMilliseconds(m_MeshTimestamp)}", m_Style);
+            GUI.enabled = true;
+        }
+
+        void BeginProfiler(ref double timestamp)
+        {
+            timestamp = Time.realtimeSinceStartupAsDouble;
+        }
+
+        void EndProfilier(ref double timestamp)
+        {
+            timestamp = Time.realtimeSinceStartupAsDouble - timestamp;
+        }
+
         void LogTimestamps(int numChunks)
         {
-            //Debug.Log($"Regenerated {numChunks} chunks in {m_DensityTimestamp + m_MeshTimestamp} seconds. (d: {m_DensityTimestamp}, m: {m_MeshTimestamp})");
             Debug.Log($"Regenerated {numChunks} chunks in {ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)} milliseconds. (d: {ToMilliseconds(m_DensityTimestamp)}, m: {ToMilliseconds(m_MeshTimestamp)})");
         }
 
