@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 61039940}
   - component: {fileID: 61039939}
   m_Layer: 0
-  m_Name: '1: Sphere Brush (Additive)'
+  m_Name: '-1: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -151,7 +151,7 @@ MonoBehaviour:
   Shape: 0
   BlendMode: 0
   Sharpness: 0.2
-  Dimention1: 64
+  Dimention1: 9.233203
   Dimention2: 4
 --- !u!4 &61039940
 Transform:
@@ -162,7 +162,7 @@ Transform:
   m_GameObject: {fileID: 61039938}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 128, y: 128, z: 128}
+  m_LocalPosition: {x: 133, y: 143.9, z: 128}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -999,7 +999,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  ProfilingEnabled: 1
+  SendLogMessages: 1
 --- !u!4 &975179716
 Transform:
   m_ObjectHideFlags: 0
@@ -2019,7 +2019,7 @@ GameObject:
   - component: {fileID: 1484929223}
   - component: {fileID: 1484929222}
   m_Layer: 0
-  m_Name: '0: Sphere Brush (Additive)'
+  m_Name: '-1: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2039,7 +2039,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
   Shape: 0
   BlendMode: 0
-  Sharpness: 0.2
+  Sharpness: 1
   Dimention1: 12
   Dimention2: 4
 --- !u!4 &1484929223
@@ -2145,13 +2145,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1550291594}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 32, y: 32, z: -8}
+  m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 160, y: 48, z: 64}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!114 &1550291598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2209,7 +2209,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerrainGeneration.Debug.TerrainPainter
   Radius: 1
-  Sharpness: 1
+  Sharpness: 2
   m_InputMode: 1
   PaintDelay: 0.02
   RayLength: 500
@@ -2472,7 +2472,7 @@ GameObject:
   - component: {fileID: 1669996629}
   - component: {fileID: 1669996628}
   m_Layer: 0
-  m_Name: '0: Sphere Brush (Additive)'
+  m_Name: '-1: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2504,7 +2504,7 @@ Transform:
   m_GameObject: {fileID: 1669996627}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 32, y: 32, z: 32}
+  m_LocalPosition: {x: 16, y: 16, z: 16}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3396,17 +3396,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55795169391e3d247ad050f865be483b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
-  MeshingMethod: 3
+  MeshingMethod: 1
   DensityMethod: 2
   Dimentions:
-    x: 8
-    y: 8
-    z: 8
-  ChunkSize: 0
+    x: 1
+    y: 1
+    z: 1
+  ChunkSize: 2
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  ProfilingEnabled: 1
+  SendLogMessages: 1
 --- !u!114 &1992562660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3566,7 +3566,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  ProfilingEnabled: 1
+  SendLogMessages: 1
 --- !u!4 &2129895804
 Transform:
   m_ObjectHideFlags: 0

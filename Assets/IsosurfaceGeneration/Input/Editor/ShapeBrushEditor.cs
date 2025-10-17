@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace IsosurfaceGeneration.Input
 {
+    [CanEditMultipleObjects]
     [CustomEditor(typeof(ShapeBrush))]
     class ShapeBrushEditor : Editor
     {

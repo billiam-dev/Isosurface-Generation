@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine;
 
 namespace IsosurfaceGeneration.Input
@@ -57,7 +58,10 @@ namespace IsosurfaceGeneration.Input
             Gizmos.color = new(0, 1, 0, 0.1f);
 
             foreach (ShapeBrush brush in m_Brushes)
-                brush.DrawChunkVolume(m_Isosurface);
+            {
+                if (Selection.Contains(brush.gameObject))
+                    brush.DrawChunkVolume(m_Isosurface);
+            }
         }
 #endif
     }

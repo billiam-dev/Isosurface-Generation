@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Profiling;
 using UnityEngine;
 
 namespace IsosurfaceGeneration
@@ -59,7 +58,7 @@ namespace IsosurfaceGeneration
         /// Enable to see how much time the density and meshing algorithms are taking to compute the surface.
         /// </summary>
         [Tooltip("Enable to see how much time the density and meshing algorithms are taking to compute the surface.")]
-        public bool ProfilingEnabled = false;
+        public bool SendLogMessages = false;
         #endregion
 
         public bool PropertyChanged {  get; set; }
@@ -78,7 +77,8 @@ namespace IsosurfaceGeneration
         int m_ChunkSize;
         Chunk[] m_Chunks;
 
-        double m_ProfilingTimestamp;
+        double m_DensityTimestamp;
+        double m_MeshTimestamp;
 
         /// <summary>
         /// Initialize all chunks, does not apply shapes automatically.
@@ -118,8 +118,9 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void Recompute(NativeArray<Shape> shapeQueue)
         {
-            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
+            List<int> updateChunks = new();
 
+            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble;
             float baseDensity = InvertSurface ? 32 : -32;
 
             if (DensityMethod == DensityGenerationMethod.Recompute || DensityMethod == DensityGenerationMethod.RecomputeJobs)
@@ -136,26 +137,24 @@ namespace IsosurfaceGeneration
 
                 // Then loop through shapes and apply based on bounding volume.
                 for (int i = 0; i < shapeQueue.Length; i++)
-                    ApplyShapeWithBoundingVolume(shapeQueue[i], out _); // TODO: output effected chunk mask? bitwise || together and only update those chunks.
+                {
+                    ApplyShapeWithBoundingVolume(shapeQueue[i], out List<int> effectedChunks); // TODO: output effected chunk mask? bitwise || together and only update those chunks.
+
+                    for (int j = 0; j < effectedChunks.Count; j++)
+                        if (!updateChunks.Contains(effectedChunks[j]))
+                            updateChunks.Add(effectedChunks[j]);
+                }
             }
+            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
 
-            if (ProfilingEnabled)
-            {
-                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
-                Debug.Log($"Recomputed densities of {m_Chunks.Length} chunks in {time} seconds.");
-            }
+            // Update effected chunks
+            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
+            foreach (int index in updateChunks)
+                UpdateChunk(index);
+            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
 
-            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
-
-            // Update all chunks
-            for (int i = 0; i < m_Chunks.Length; i++)
-                UpdateChunk(i);
-
-            if (ProfilingEnabled)
-            {
-                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
-                Debug.Log($"Regenerated {m_Chunks.Length} chunk meshes in {time} seconds.");
-            }
+            if (SendLogMessages)
+                Debug.Log($"Regenerated {updateChunks.Count} chunks in {m_DensityTimestamp + m_MeshTimestamp} seconds. (d: {m_DensityTimestamp}, m: {m_MeshTimestamp})");
         }
 
         /// <summary>
@@ -163,18 +162,17 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void ApplyShape(Shape shape)
         {
-            m_ProfilingTimestamp = Time.realtimeSinceStartupAsDouble;
-
+            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble;
             ApplyShapeWithBoundingVolume(shape, out List<int> effectedChunks);
+            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
 
+            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
             foreach (int index in effectedChunks)
                 UpdateChunk(index);
+            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
 
-            if (ProfilingEnabled)
-            {
-                double time = Time.realtimeSinceStartupAsDouble - m_ProfilingTimestamp;
-                Debug.Log($"Recomputed densities of {effectedChunks.Count} chunks in {time} seconds.");
-            }
+            if (SendLogMessages)
+                Debug.Log($"Regenerated {effectedChunks.Count} chunks in {m_DensityTimestamp + m_MeshTimestamp} seconds. (d: {m_DensityTimestamp}, m: {m_MeshTimestamp})");
         }
 
         void ApplyShapeWithBoundingVolume(Shape shape, out List<int> effectedChunks)

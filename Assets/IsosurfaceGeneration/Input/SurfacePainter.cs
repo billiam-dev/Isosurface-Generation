@@ -16,8 +16,8 @@ namespace IsosurfaceGeneration.Input
         [Range(1.0f, 32.0f)]
         public float Radius = 1.0f;
 
-        [Range(0.1f, 1.0f)]
-        public float Sharpness = 1.0f;
+        [Range(0.1f, 10.0f)]
+        public float Sharpness = 2.0f;
 
         [Header("Input")]
         [SerializeField]

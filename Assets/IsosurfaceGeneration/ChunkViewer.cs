@@ -11,22 +11,22 @@ namespace IsosurfaceGeneration.Debugging
         public Isosurface Surface;
         GUIStyle m_Style;
 
-        void OnEnable()
-        {
-            m_Style = new GUIStyle()
-            {
-                alignment = TextAnchor.UpperLeft,
-                normal = new GUIStyleState()
-                {
-                    textColor = Color.white
-                }
-            };
-        }
-
         void OnDrawGizmos()
         {
             if (!Surface || !Surface.IsGenerated)
                 return;
+
+            if (m_Style == null)
+            {
+                m_Style = new GUIStyle()
+                {
+                    alignment = TextAnchor.UpperLeft,
+                    normal = new GUIStyleState()
+                    {
+                        textColor = Color.white
+                    }
+                };
+            }
 
             Gizmos.color = new Color(1, 0, 0, 0.5f);
             Gizmos.DrawSphere(transform.position, 0.1f);
