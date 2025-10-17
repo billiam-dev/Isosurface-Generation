@@ -63,7 +63,7 @@ namespace IsosurfaceGeneration
 
         public bool PropertyChanged {  get; set; }
 
-        public bool IsGenerated => m_Chunks != null;
+        public bool IsGenerated => enabled && m_Chunks != null;
 
         public int ChunkSizeCells => ChunkSize switch
         {
@@ -118,19 +118,30 @@ namespace IsosurfaceGeneration
         /// </summary>
         public void Recompute(NativeArray<Shape> shapeQueue)
         {
-            List<int> updateChunks = new();
-
             m_DensityTimestamp = Time.realtimeSinceStartupAsDouble;
-            float baseDensity = InvertSurface ? 32 : -32;
+            float baseDensity = InvertSurface ? 32.0f : -32.0f;
 
             if (DensityMethod == DensityGenerationMethod.Recompute || DensityMethod == DensityGenerationMethod.RecomputeJobs)
             {
                 // Loop through all chunks, set initial value and then apply all shapes.
                 for (int i = 0; i < m_Chunks.Length; i++)
                     m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, DensityMethod);
+
+                m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
+
+                // Update effected chunks
+                m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
+                for (int i = 0; i < m_Chunks.Length; i++)
+                    UpdateChunk(i);
+                m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
+
+                if (SendLogMessages)
+                    LogTimestamps(m_Chunks.Length);
             }
             else
             {
+                List<int> updateChunks = new();
+
                 // First fill entire map with value.
                 for (int i = 0; i < m_Chunks.Length; i++)
                     m_Chunks[i].DensityMap.FillDensityMap(baseDensity, DensityMethod);
@@ -144,17 +155,18 @@ namespace IsosurfaceGeneration
                         if (!updateChunks.Contains(effectedChunks[j]))
                             updateChunks.Add(effectedChunks[j]);
                 }
+
+                m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
+
+                // Update effected chunks
+                m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
+                foreach (int index in updateChunks)
+                    UpdateChunk(index);
+                m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
+
+                if (SendLogMessages)
+                    LogTimestamps(updateChunks.Count);
             }
-            m_DensityTimestamp = Time.realtimeSinceStartupAsDouble - m_DensityTimestamp;
-
-            // Update effected chunks
-            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble;
-            foreach (int index in updateChunks)
-                UpdateChunk(index);
-            m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
-
-            if (SendLogMessages)
-                Debug.Log($"Regenerated {updateChunks.Count} chunks in {m_DensityTimestamp + m_MeshTimestamp} seconds. (d: {m_DensityTimestamp}, m: {m_MeshTimestamp})");
         }
 
         /// <summary>
@@ -172,7 +184,7 @@ namespace IsosurfaceGeneration
             m_MeshTimestamp = Time.realtimeSinceStartupAsDouble - m_MeshTimestamp;
 
             if (SendLogMessages)
-                Debug.Log($"Regenerated {effectedChunks.Count} chunks in {m_DensityTimestamp + m_MeshTimestamp} seconds. (d: {m_DensityTimestamp}, m: {m_MeshTimestamp})");
+                LogTimestamps(effectedChunks.Count);
         }
 
         void ApplyShapeWithBoundingVolume(Shape shape, out List<int> effectedChunks)
@@ -427,6 +439,23 @@ namespace IsosurfaceGeneration
             PropertyChanged = true;
         }
 #endif
+
+        void LogTimestamps(int numChunks)
+        {
+            //Debug.Log($"Regenerated {numChunks} chunks in {m_DensityTimestamp + m_MeshTimestamp} seconds. (d: {m_DensityTimestamp}, m: {m_MeshTimestamp})");
+            Debug.Log($"Regenerated {numChunks} chunks in {ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)} milliseconds. (d: {ToMilliseconds(m_DensityTimestamp)}, m: {ToMilliseconds(m_MeshTimestamp)})");
+        }
+
+        double ToMilliseconds(double time)
+        {
+            double timeMiliseconds = time * 1000.0;
+
+            timeMiliseconds *= 100.0;
+            timeMiliseconds = Math.Round(timeMiliseconds);
+            timeMiliseconds /= 100.0;
+
+            return timeMiliseconds;
+        }
     }
 
     public enum IcosurfaceGenerationMethod

@@ -23,7 +23,10 @@ namespace IsosurfaceGeneration.Input
         [Range(0.1f, 1.0f), Tooltip("Value used in the smooth min function, which blends shapes together. The higher the value, the sharper the seams between objects will be.")]
         public float Sharpness = 0.2f;
 
+        [Min(0)]
         public float Dimention1 = 4;
+
+        [Min(0)]
         public float Dimention2 = 4;
 
         public bool PropertyChanged

@@ -1,3 +1,4 @@
+using IsosurfaceGeneration.Util;
 using Unity.Mathematics;
 
 namespace IsosurfaceGeneration
@@ -11,6 +12,29 @@ namespace IsosurfaceGeneration
         public float dimention1;
         public float dimention2;
 
+        public float Distance(float3 position)
+        {
+            switch (shapeID)
+            {
+                case ShapeFuncion.Sphere:
+                    return DistanceFunction.Sphere(position, dimention1);
+                case ShapeFuncion.SemiSphere:
+                    return DistanceFunction.SemiSphere(position, dimention1, dimention2);
+                case ShapeFuncion.Capsule:
+                    return DistanceFunction.Capsule(position, dimention1, dimention2);
+                case ShapeFuncion.Torus:
+                    return DistanceFunction.Torus(position, dimention1, dimention2);
+                default:
+                    return -32;
+            }
+        }
+
+        public float3 TransformPosition(float3 position)
+        {
+            float4 transformedPos = math.mul(matrix, new float4(position, 1));
+            return new float3(transformedPos.x, transformedPos.y, transformedPos.z);
+        }
+
         /// <summary>
         /// Returns a bounding volume that represents which chunks this shape function will effect.
         /// This is determined by the shape, size and sharpness of the shape.
@@ -23,14 +47,24 @@ namespace IsosurfaceGeneration
 
             float4 boundsVolume = 0;
 
-            // Base extent
+            // Base size
             switch (shapeID)
             {
                 case ShapeFuncion.Sphere:
                     boundsVolume = dimention1 * 2.0f;
                     break;
+
+                case ShapeFuncion.SemiSphere:
+                    boundsVolume = dimention1 * 2.0f;
+                    break;
+
+                case ShapeFuncion.Capsule:
+                case ShapeFuncion.Torus:
+                    boundsVolume = (dimention1 + dimention2) * 2.5f;
+                    break;
             }
 
+            // m_Sharpness factor
             boundsVolume *= 2.0f / sharpness;
 
             // TODO
@@ -51,7 +85,10 @@ namespace IsosurfaceGeneration
 
     public enum ShapeFuncion
     {
-        Sphere
+        Sphere,
+        SemiSphere,
+        Capsule,
+        Torus
     }
 
     public enum BlendMode

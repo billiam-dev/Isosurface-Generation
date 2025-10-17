@@ -4,7 +4,6 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Unity.Profiling;
 using UnityEngine;
 
 // Resources:
@@ -289,14 +288,17 @@ namespace IsosurfaceGeneration.Meshing
 
         float3 CalculateNormal(int3 coord)
         {
+            // TODO: Surface Nets JOBS normals are totally broken.
             return new float3(0, 1, 0);
 
+            /*
             float3 normal;
             normal.x = density[IndexHelper.Wrap(coord - NetsTables.Axis[0], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[0], densityPPA)];
             normal.y = density[IndexHelper.Wrap(coord - NetsTables.Axis[1], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[1], densityPPA)];
             normal.z = density[IndexHelper.Wrap(coord - NetsTables.Axis[2], densityPPA)] - density[IndexHelper.Wrap(coord + NetsTables.Axis[2], densityPPA)];
 
             return math.normalize(normal);
+            */
         }
     }
 

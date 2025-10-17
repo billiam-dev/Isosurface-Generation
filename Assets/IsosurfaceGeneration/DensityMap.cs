@@ -108,18 +108,8 @@ namespace IsosurfaceGeneration
 
                 foreach (Shape shape in shapeQueue)
                 {
-                    float4 pos = new(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex, 1);
-                    pos = math.mul(shape.matrix, pos);
-
-                    float distance = 0;
-                    switch (shape.shapeID)
-                    {
-                        case ShapeFuncion.Sphere:
-                            distance = DistanceFunction.Sphere(new float3(pos.x, pos.y, pos.z), shape.dimention1);
-                            break;
-                    }
-
-                    DensityHelpers.ApplyDistanceFunction(density, i, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
+                    float3 pos = shape.TransformPosition(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex);
+                    DensityHelpers.ApplyDistanceFunction(density, i, shape.Distance(pos), shape.sharpness, shape.blendMode == BlendMode.Subtractive);
                 }
             }
         }
@@ -128,18 +118,8 @@ namespace IsosurfaceGeneration
         {
             for (int i = 0; i < density.Length; i++)
             {
-                float4 pos = new(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex, 1);
-                pos = math.mul(shape.matrix, pos);
-
-                float distance = 0;
-                switch (shape.shapeID)
-                {
-                    case ShapeFuncion.Sphere:
-                        distance = DistanceFunction.Sphere(new float3(pos.x, pos.y, pos.z), shape.dimention1);
-                        break;
-                }
-
-                DensityHelpers.ApplyDistanceFunction(density, i, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
+                float3 pos = shape.TransformPosition(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex);
+                DensityHelpers.ApplyDistanceFunction(density, i, shape.Distance(pos), shape.sharpness, shape.blendMode == BlendMode.Subtractive);
             }
         }
         #endregion
@@ -175,20 +155,44 @@ namespace IsosurfaceGeneration
             switch (shape.shapeID)
             {
                 case ShapeFuncion.Sphere:
-                    ApplyShereJob applyShapeJob = new()
+                    ApplyShereJob applyShereJob = new()
                     {
                         density = density,
                         pointsPerAxis = pointsPerAxis,
                         chunkOriginIndex = chunkOriginIndex,
-
-                        matrix = shape.matrix,
-                        sharpness = shape.sharpness,
-                        subtractive = shape.blendMode == BlendMode.Subtractive,
-                        
-                        radius = shape.dimention1
+                        shape = shape
                     };
-
-                    applyShapeJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+                    applyShereJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+                    break;
+                case ShapeFuncion.SemiSphere:
+                    ApplySemiSphereJob applySemiSphereJob = new()
+                    {
+                        density = density,
+                        pointsPerAxis = pointsPerAxis,
+                        chunkOriginIndex = chunkOriginIndex,
+                        shape = shape
+                    };
+                    applySemiSphereJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+                    break;
+                case ShapeFuncion.Capsule:
+                    ApplyCapsuleJob applyCapsuleJob = new()
+                    {
+                        density = density,
+                        pointsPerAxis = pointsPerAxis,
+                        chunkOriginIndex = chunkOriginIndex,
+                        shape = shape
+                    };
+                    applyCapsuleJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+                    break;
+                case ShapeFuncion.Torus:
+                    ApplyTorusJob applyTorusJob = new()
+                    {
+                        density = density,
+                        pointsPerAxis = pointsPerAxis,
+                        chunkOriginIndex = chunkOriginIndex,
+                        shape = shape
+                    };
+                    applyTorusJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
             }
         }

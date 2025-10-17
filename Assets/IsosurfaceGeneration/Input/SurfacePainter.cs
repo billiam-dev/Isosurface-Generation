@@ -13,21 +13,25 @@ namespace IsosurfaceGeneration.Input
         }
 
         [Header("Shape")]
+        [SerializeField]
         [Range(1.0f, 32.0f)]
-        public float Radius = 1.0f;
+        float m_Radius = 1.0f;
 
+        [SerializeField]
         [Range(0.1f, 10.0f)]
-        public float Sharpness = 2.0f;
+        float m_Sharpness = 2.0f;
 
         [Header("Input")]
         [SerializeField]
         InputMode m_InputMode = InputMode.Mouse;
 
+        [SerializeField]
         [Range(0.0f, 0.5f)]
-        public float PaintDelay = 0.05f;
+        float m_InputDelay = 0.05f;
 
+        [SerializeField]
         [Range(0.0f, 500f)]
-        public float RayLength = 500.0f;
+        float m_RayLength = 500.0f;
 
         [Header("Pointer")]
         [SerializeField]
@@ -67,20 +71,20 @@ namespace IsosurfaceGeneration.Input
             if (surface != null)
             {
                 m_Pointer.transform.position = hitPoint;
-                m_Pointer.transform.localScale = 2.0f * Radius * Vector3.one;
+                m_Pointer.transform.localScale = 2.0f * m_Radius * Vector3.one;
             }
 
-            // Radius input
+            // m_Radius input
             if (UnityEngine.Input.GetAxis("Mouse ScrollWheel") < 0.0f)
-                Radius += k_BushSizeScrollSpeed * Time.deltaTime;
+                m_Radius += k_BushSizeScrollSpeed * Time.deltaTime;
 
             if (UnityEngine.Input.GetAxis("Mouse ScrollWheel") > 0.0f)
-                Radius -= k_BushSizeScrollSpeed * Time.deltaTime;
+                m_Radius -= k_BushSizeScrollSpeed * Time.deltaTime;
 
-            Radius = Mathf.Clamp(Radius, 1.0f, 32.0f);
+            m_Radius = Mathf.Clamp(m_Radius, 1.0f, 32.0f);
 
             // Shape input
-            if (surface && Time.time > m_LastInputTime + PaintDelay)
+            if (surface && Time.time > m_LastInputTime + m_InputDelay)
             {
                 if (UnityEngine.Input.GetMouseButton(0))
                     ApplyShape(surface, hitPoint, BlendMode.Additive);
@@ -97,8 +101,8 @@ namespace IsosurfaceGeneration.Input
                 matrix = math.inverse(new AffineTransform(new float3(position), quaternion.identity, 1.0f)),
                 shapeID = ShapeFuncion.Sphere,
                 blendMode = blendMode,
-                sharpness = Sharpness,
-                dimention1 = Radius
+                sharpness = m_Sharpness,
+                dimention1 = m_Radius
             };
 
             surface.ApplyShape(shape);
@@ -122,7 +126,7 @@ namespace IsosurfaceGeneration.Input
                     break;
             }
             
-            Physics.Raycast(ray, out RaycastHit hitInfo, RayLength);
+            Physics.Raycast(ray, out RaycastHit hitInfo, m_RayLength);
 
             if (hitInfo.collider)
             {

@@ -35,22 +35,14 @@ namespace IsosurfaceGeneration
 
             for (int i = 0; i < shapes.Length; i++)
             {
-                float4 pos = new(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, 1);
-                pos = math.mul(shapes[i].matrix, pos);
-
-                float distance = 0;
-                switch (shapes[i].shapeID)
-                {
-                    case ShapeFuncion.Sphere:
-                        distance = DistanceFunction.Sphere(new float3(pos.x, pos.y, pos.z), shapes[i].dimention1);
-                        break;
-                }
-
-                DensityHelpers.ApplyDistanceFunction(density, index, distance, shapes[i].sharpness, shapes[i].blendMode == BlendMode.Subtractive);
+                float3 pos = shapes[i].TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+                DensityHelpers.ApplyDistanceFunction(density, index, shapes[i].Distance(pos), shapes[i].sharpness, shapes[i].blendMode == BlendMode.Subtractive);
             }
         }
     }
 
+    // Individual shape jobs, much more performant to switch once when scheduling the job, than on every cell.
+    // An implementation that does not have all these various density map options should just use these kernals.
     [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
     public struct ApplyShereJob : IJobParallelFor
     {
@@ -58,18 +50,64 @@ namespace IsosurfaceGeneration
         [ReadOnly] public int pointsPerAxis;
         [ReadOnly] public int3 chunkOriginIndex;
 
-        [ReadOnly] public AffineTransform matrix;
-        [ReadOnly] public float sharpness;
-        [ReadOnly] public bool subtractive;
-
-        [ReadOnly] public float radius;
+        [ReadOnly] public Shape shape;
 
         public void Execute(int index)
         {
-            float4 pos = new(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, 1);
-            pos = math.mul(matrix, pos);
-            float distance = DistanceFunction.Sphere(new float3(pos.x, pos.y, pos.z), radius);
-            DensityHelpers.ApplyDistanceFunction(density, index, distance, sharpness, subtractive);
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float distance = DistanceFunction.Sphere(pos, shape.dimention1);
+            DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
+        }
+    }
+
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    public struct ApplySemiSphereJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction] public NativeArray<float> density;
+        [ReadOnly] public int pointsPerAxis;
+        [ReadOnly] public int3 chunkOriginIndex;
+
+        [ReadOnly] public Shape shape;
+
+        public void Execute(int index)
+        {
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float distance = DistanceFunction.SemiSphere(pos, shape.dimention1, shape.dimention2);
+            DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
+        }
+    }
+
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    public struct ApplyCapsuleJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction] public NativeArray<float> density;
+        [ReadOnly] public int pointsPerAxis;
+        [ReadOnly] public int3 chunkOriginIndex;
+
+        [ReadOnly] public Shape shape;
+
+        public void Execute(int index)
+        {
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float distance = DistanceFunction.Capsule(pos, shape.dimention1, shape.dimention2);
+            DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
+        }
+    }
+
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    public struct ApplyTorusJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction] public NativeArray<float> density;
+        [ReadOnly] public int pointsPerAxis;
+        [ReadOnly] public int3 chunkOriginIndex;
+
+        [ReadOnly] public Shape shape;
+
+        public void Execute(int index)
+        {
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float distance = DistanceFunction.Torus(pos, shape.dimention1, shape.dimention2);
+            DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
         }
     }
 }
