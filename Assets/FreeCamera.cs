@@ -3,8 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class FreeCamera : MonoBehaviour
 {
-    [Range(1f, 21f)]
-    public float Acceleration = 5.0f;
+    [Range(1f, 10f)]
+    public float Acceleration = 3.0f;
 
     [Range(0.1f, 1f)]
     public float MouseSensitivity = 0.3f;
@@ -44,8 +44,8 @@ public class FreeCamera : MonoBehaviour
 
         Vector3 move = transform.right * moveInput.x + transform.forward * moveInput.y;
         if (boostHeld) move *= 3;
-        if (descendHeld) move -= new Vector3(0, 1);
-        if (ascendHeld) move += new Vector3(0, 1);
+        if (ascendHeld) move += Vector3.up;
+        if (descendHeld) move += Vector3.down;
 
         m_Velocity += Acceleration * Time.deltaTime * move;
     }

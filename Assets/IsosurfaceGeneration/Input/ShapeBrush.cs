@@ -1,33 +1,40 @@
+using System;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace IsosurfaceGeneration.Input
 {
+    [DisallowMultipleComponent]
     public class ShapeBrush : MonoBehaviour
     {
         /// <summary>
         /// Which shape function to use when applied to a surface.
         /// </summary>
         [Tooltip("Which shape function to use when applied to a surface.")]
-        public ShapeFuncion Shape;
+        [SerializeField]
+        ShapeFunction m_ShapeType = ShapeFunction.Sphere;
 
         /// <summary>
         /// Whether or not the shape is additive or subtractive.
         /// </summary>
         [Tooltip("Whether or not the shape is additive or subtractive.")]
-        public BlendMode BlendMode;
+        [SerializeField]
+        BlendMode m_BlendMode = BlendMode.Additive;
 
         /// <summary>
         /// Value used in the smooth min function, which blends shapes together. The higher the value, the sharper the seams between objects will be.
         /// </summary>
         [Range(0.1f, 1.0f), Tooltip("Value used in the smooth min function, which blends shapes together. The higher the value, the sharper the seams between objects will be.")]
-        public float Sharpness = 0.2f;
+        [SerializeField]
+        float m_Sharpness = 0.2f;
 
         [Min(0)]
-        public float Dimention1 = 4;
+        [SerializeField]
+        float m_Dimention1 = 4.0f;
 
         [Min(0)]
-        public float Dimention2 = 4;
+        [SerializeField]
+        float m_Dimention2 = 4.0f;
 
         public bool PropertyChanged
         {
@@ -58,6 +65,11 @@ namespace IsosurfaceGeneration.Input
         bool m_PropertyChanged;
         int m_OrderInQueue = -1;
 
+        public void SetType(ShapeFunction type)
+        {
+            m_ShapeType = type;
+        }
+
         public Shape GetShapeProperties(Isosurface surface)
         {
             Vector3 pos = transform.position - surface.transform.position;
@@ -67,17 +79,17 @@ namespace IsosurfaceGeneration.Input
             return new Shape()
             {
                 matrix = math.inverse(matrix),
-                shapeID = Shape,
-                blendMode = BlendMode,
-                sharpness = Sharpness,
-                dimention1 = Dimention1,
-                dimention2 = Dimention2,
+                shapeID = m_ShapeType,
+                blendMode = m_BlendMode,
+                sharpness = m_Sharpness,
+                dimention1 = m_Dimention1,
+                dimention2 = m_Dimention2,
             };
         }
 
         void UpdateName()
         {
-            gameObject.name = $"{m_OrderInQueue}: {Shape} Brush ({BlendMode})";
+            gameObject.name = $"{m_OrderInQueue}: {m_ShapeType} Brush ({m_BlendMode})";
         }
 
 #if UNITY_EDITOR

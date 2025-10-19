@@ -7,7 +7,7 @@ namespace IsosurfaceGeneration
     {
         public AffineTransform matrix; // worldToLocal
         public AffineTransform inverseMatrix => math.inverse(matrix); // localToWorld
-        public ShapeFuncion shapeID;
+        public ShapeFunction shapeID;
         public BlendMode blendMode;
         public float sharpness;
         public float dimention1;
@@ -17,13 +17,13 @@ namespace IsosurfaceGeneration
         {
             switch (shapeID)
             {
-                case ShapeFuncion.Sphere:
+                case ShapeFunction.Sphere:
                     return DistanceFunction.Sphere(position, dimention1);
-                case ShapeFuncion.SemiSphere:
+                case ShapeFunction.SemiSphere:
                     return DistanceFunction.SemiSphere(position, dimention1, dimention2);
-                case ShapeFuncion.Capsule:
+                case ShapeFunction.Capsule:
                     return DistanceFunction.Capsule(position, dimention1, dimention2);
-                case ShapeFuncion.Torus:
+                case ShapeFunction.Torus:
                     return DistanceFunction.Torus(position, dimention1, dimention2);
                 default:
                     return -32;
@@ -46,21 +46,21 @@ namespace IsosurfaceGeneration
             // The closer we get to that point the more accurate the terrain will be, but the less performance will be saved.
             // The minimum bounding volume is a 27 chunk area in situations where the shape is less than the size of one chunk.
 
-            float4 boundsVolume = 0;
+            float3 boundsVolume = 0;
 
             // Base size
             switch (shapeID)
             {
-                case ShapeFuncion.Sphere:
+                case ShapeFunction.Sphere:
                     boundsVolume = dimention1 * 2.0f;
                     break;
 
-                case ShapeFuncion.SemiSphere:
+                case ShapeFunction.SemiSphere:
                     boundsVolume = dimention1 * 2.0f;
                     break;
 
-                case ShapeFuncion.Capsule:
-                case ShapeFuncion.Torus:
+                case ShapeFunction.Capsule:
+                case ShapeFunction.Torus:
                     boundsVolume = (dimention1 + dimention2) * 2.5f;
                     break;
             }
@@ -84,7 +84,7 @@ namespace IsosurfaceGeneration
         }
     }
 
-    public enum ShapeFuncion
+    public enum ShapeFunction
     {
         Sphere,
         SemiSphere,

@@ -154,7 +154,7 @@ namespace IsosurfaceGeneration
         {
             switch (shape.shapeID)
             {
-                case ShapeFuncion.Sphere:
+                case ShapeFunction.Sphere:
                     ApplyShereJob applyShereJob = new()
                     {
                         density = density,
@@ -164,7 +164,7 @@ namespace IsosurfaceGeneration
                     };
                     applyShereJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
-                case ShapeFuncion.SemiSphere:
+                case ShapeFunction.SemiSphere:
                     ApplySemiSphereJob applySemiSphereJob = new()
                     {
                         density = density,
@@ -174,7 +174,7 @@ namespace IsosurfaceGeneration
                     };
                     applySemiSphereJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
-                case ShapeFuncion.Capsule:
+                case ShapeFunction.Capsule:
                     ApplyCapsuleJob applyCapsuleJob = new()
                     {
                         density = density,
@@ -184,7 +184,7 @@ namespace IsosurfaceGeneration
                     };
                     applyCapsuleJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
-                case ShapeFuncion.Torus:
+                case ShapeFunction.Torus:
                     ApplyTorusJob applyTorusJob = new()
                     {
                         density = density,

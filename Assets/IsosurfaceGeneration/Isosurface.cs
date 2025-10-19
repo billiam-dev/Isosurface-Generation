@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace IsosurfaceGeneration
 {
+    [DisallowMultipleComponent]
     public class Isosurface : MonoBehaviour
     {
         #region Properties
@@ -140,7 +141,7 @@ namespace IsosurfaceGeneration
             }
             else
             {
-                List<int> updateChunks = new();
+                List<int> updateChunks = new(); // TODO: initialize as chunks that already contain geometry
 
                 // First fill entire map with value.
                 for (int i = 0; i < m_Chunks.Length; i++)
@@ -439,7 +440,7 @@ namespace IsosurfaceGeneration
         }
 #endif
 
-        const float k_Width = 100;
+        const float k_Width = 200;
         const float k_Height = 24;
         const float k_Margin = 20;
         Rect m_TextAreaRect;
@@ -460,9 +461,14 @@ namespace IsosurfaceGeneration
                     fontSize = 24
                 };
 
-            GUI.enabled = false;
-            GUI.TextField(m_TextAreaRect, $"\n{ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)}\nd: {ToMilliseconds(m_DensityTimestamp)}\nm: {ToMilliseconds(m_MeshTimestamp)}", m_Style);
-            GUI.enabled = true;
+            Rect copyRect = m_TextAreaRect;
+
+            copyRect.y += k_Height;
+            GUI.Label(copyRect, $"{ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)}", m_Style);
+            copyRect.y += k_Height;
+            GUI.Label(copyRect, $"d: {ToMilliseconds(m_DensityTimestamp)}", m_Style);
+            copyRect.y += k_Height;
+            GUI.Label(copyRect, $"m: {ToMilliseconds(m_MeshTimestamp)}", m_Style);
         }
 
         void BeginProfiler(ref double timestamp)

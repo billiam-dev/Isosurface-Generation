@@ -10,7 +10,7 @@ public class FPSCounter : MonoBehaviour
 
     Rect m_TextAreaRect;
 
-    const float k_Width = 100;
+    const float k_Width = 200;
     const float k_Height = 24;
     const float k_Margin = 20;
 
@@ -40,8 +40,6 @@ public class FPSCounter : MonoBehaviour
                 fontSize = 24
             };
 
-        GUI.enabled = false;
-        GUI.TextField(m_TextAreaRect, $"{m_SmoothedFPS}, {m_FPS}", m_Style);
-        GUI.enabled = true;
+        GUI.Label(m_TextAreaRect, $"{m_SmoothedFPS}, {m_FPS}", m_Style);
     }
 }

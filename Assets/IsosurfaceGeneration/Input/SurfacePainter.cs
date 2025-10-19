@@ -74,7 +74,7 @@ namespace IsosurfaceGeneration.Input
                 m_Pointer.transform.localScale = 2.0f * m_Radius * Vector3.one;
             }
 
-            // m_Radius input
+            // Radius input
             if (UnityEngine.Input.GetAxis("Mouse ScrollWheel") < 0.0f)
                 m_Radius += k_BushSizeScrollSpeed * Time.deltaTime;
 
@@ -103,7 +103,7 @@ namespace IsosurfaceGeneration.Input
             Shape shape = new()
             {
                 matrix = math.inverse(matrix),
-                shapeID = ShapeFuncion.Sphere,
+                shapeID = ShapeFunction.Sphere,
                 blendMode = blendMode,
                 sharpness = m_Sharpness,
                 dimention1 = m_Radius

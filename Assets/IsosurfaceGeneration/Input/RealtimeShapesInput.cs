@@ -10,19 +10,18 @@ namespace IsosurfaceGeneration.Input
     [RequireComponent(typeof(Isosurface))]
     public class RealtimeShapesInput : MonoBehaviour
     {
-        Isosurface m_Isosurface;
+        [SerializeReference]
+        ShapeBrush[] m_Brushes;
 
         NativeList<Shape> m_ShapeQueue;
+        int m_NumBrushes = -1;
+
+        Isosurface m_Isosurface;
         bool m_RecomputeSurface;
 
         int3 m_CurrentDimentions;
         ChunkCellDimentions m_CurrentChunkSize;
         IcosurfaceGenerationMethod m_CurrentMeshingMethod;
-
-        [SerializeField]
-        ShapeBrush[] m_Brushes;
-
-        int m_NumBrushes = -1;
 
         void OnEnable()
         {
@@ -125,6 +124,21 @@ namespace IsosurfaceGeneration.Input
                 m_NumBrushes = m_Brushes.Length;
                 m_RecomputeSurface = true;
             }
+        }
+
+        public void AddShape(ShapeFunction type)
+        {
+            ShapeBrush newBrush = new GameObject("New Shape Brush").AddComponent<ShapeBrush>();
+            newBrush.SetType(type);
+            newBrush.transform.SetParent(transform);
+            newBrush.transform.localPosition = Vector3.zero;
+            EvaluatePropertyChanged();
+        }
+
+        public void RemoveShape(int index)
+        {
+            DestroyImmediate(m_Brushes[index].gameObject);
+            EvaluatePropertyChanged();
         }
 
 #if UNITY_EDITOR
