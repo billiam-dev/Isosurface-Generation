@@ -28,6 +28,8 @@ namespace IsosurfaceGeneration
             }
         }
 
+        public bool ContainsGeometry => m_Mesh.vertices.Length > 2 && m_Mesh.triangles.Length > 2;
+
         DensityMap m_DensityMap;
         Mesh m_Mesh;
 

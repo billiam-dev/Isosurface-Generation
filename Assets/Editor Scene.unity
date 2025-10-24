@@ -873,10 +873,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cb754568eb328f428a0950fe675b57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.RealtimeShapeQueue
-  m_Brushes:
+  m_ShapeBrushes:
   - {fileID: 372619558}
-  - {fileID: 1131499565}
   - {fileID: 1416525994}
+  - {fileID: 1131499565}
   - {fileID: 1024668777}
   - {fileID: 2052320108}
   - {fileID: 1710611595}
@@ -903,7 +903,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  SendLogMessages: 0
+  SendLogMessages: 1
 --- !u!4 &975179716
 Transform:
   m_ObjectHideFlags: 0
@@ -919,8 +919,8 @@ Transform:
   m_Children:
   - {fileID: 950326876}
   - {fileID: 372619559}
-  - {fileID: 1131499566}
   - {fileID: 1416525995}
+  - {fileID: 1131499566}
   - {fileID: 1024668778}
   - {fileID: 2052320109}
   - {fileID: 1710611596}
@@ -1302,7 +1302,7 @@ GameObject:
   - component: {fileID: 1131499566}
   - component: {fileID: 1131499565}
   m_Layer: 0
-  m_Name: '1: SemiSphere Brush (Additive)'
+  m_Name: '2: SemiSphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1771,7 +1771,7 @@ GameObject:
   - component: {fileID: 1416525995}
   - component: {fileID: 1416525994}
   m_Layer: 0
-  m_Name: '2: Capsule Brush (Additive)'
+  m_Name: '1: Capsule Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2387,7 +2387,7 @@ GameObject:
   - component: {fileID: 1669996629}
   - component: {fileID: 1669996628}
   m_Layer: 0
-  m_Name: '0: Sphere Brush (Additive)'
+  m_Name: '-1: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3420,7 +3420,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 4fd0d3d0b26430541b62c847bd1cc03d, type: 2}
-  SendLogMessages: 0
+  SendLogMessages: 1
 --- !u!114 &1992562660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3433,8 +3433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cb754568eb328f428a0950fe675b57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IsosurfaceGeneration.Input.RealtimeShapesInput
-  m_Brushes:
-  - {fileID: 1669996628}
+  m_ShapeBrushes: []
 --- !u!1 &2052320107
 GameObject:
   m_ObjectHideFlags: 0

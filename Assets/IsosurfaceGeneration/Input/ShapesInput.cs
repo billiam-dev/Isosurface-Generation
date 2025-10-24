@@ -8,10 +8,10 @@ namespace IsosurfaceGeneration.Input
     [ExecuteInEditMode]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Isosurface))]
-    public class RealtimeShapesInput : MonoBehaviour
+    public class ShapesInput : MonoBehaviour
     {
-        [SerializeReference]
-        ShapeBrush[] m_Brushes;
+        [SerializeField]
+        ShapeBrush[] m_ShapeBrushes;
 
         NativeList<Shape> m_ShapeQueue;
         int m_NumBrushes = -1;
@@ -93,12 +93,12 @@ namespace IsosurfaceGeneration.Input
         void EvaluatePropertyChanged()
         {
             m_ShapeQueue.Clear();
-            m_Brushes = GetComponentsInChildren<ShapeBrush>();
+            m_ShapeBrushes = GetComponentsInChildren<ShapeBrush>();
 
             // Evaluate changes in brushes and build shape queue.
-            for (int i = 0; i < m_Brushes.Length; i++)
+            for (int i = 0; i < m_ShapeBrushes.Length; i++)
             {
-                ShapeBrush shaper = m_Brushes[i];
+                ShapeBrush shaper = m_ShapeBrushes[i];
 
                 // Check queue order.
                 if (shaper.OrderInQueue != i)
@@ -108,9 +108,9 @@ namespace IsosurfaceGeneration.Input
                 }
 
                 // Check property changed.
-                if (shaper.PropertyChanged)
+                if (shaper.IsDirty)
                 {
-                    shaper.PropertyChanged = false;
+                    shaper.IsDirty = false;
                     m_RecomputeSurface = true;
                 }
 
@@ -119,25 +119,35 @@ namespace IsosurfaceGeneration.Input
             }
 
             // Evaluate changes in queue length.
-            if (m_NumBrushes != m_Brushes.Length)
+            if (m_NumBrushes != m_ShapeBrushes.Length)
             {
-                m_NumBrushes = m_Brushes.Length;
+                m_NumBrushes = m_ShapeBrushes.Length;
                 m_RecomputeSurface = true;
             }
         }
 
-        public void AddShape(ShapeFunction type)
+        public void AddShapeBrush(ShapeFunction type)
         {
             ShapeBrush newBrush = new GameObject("New Shape Brush").AddComponent<ShapeBrush>();
-            newBrush.SetType(type);
             newBrush.transform.SetParent(transform);
             newBrush.transform.localPosition = Vector3.zero;
+
+            newBrush.SetType(type);
+
             EvaluatePropertyChanged();
         }
 
-        public void RemoveShape(int index)
+        public void ReorderBrushes(int oldIndex, int newIndex)
         {
-            DestroyImmediate(m_Brushes[index].gameObject);
+            m_ShapeBrushes[oldIndex].transform.SetSiblingIndex(newIndex);
+        }
+
+        public void DeleteShapeBrush(int index)
+        {
+            // This just never gets called for some reason...?
+            Debug.Log($"Delete element {index}");
+            DestroyImmediate(m_ShapeBrushes[index].gameObject);
+
             EvaluatePropertyChanged();
         }
 
@@ -146,7 +156,7 @@ namespace IsosurfaceGeneration.Input
         {
             Gizmos.color = new(0, 1, 0, 0.1f);
 
-            foreach (ShapeBrush brush in m_Brushes)
+            foreach (ShapeBrush brush in m_ShapeBrushes)
             {
                 if (Selection.Contains(brush.gameObject))
                     brush.DrawChunkVolume(m_Isosurface);

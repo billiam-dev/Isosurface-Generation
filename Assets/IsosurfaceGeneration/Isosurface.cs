@@ -141,7 +141,12 @@ namespace IsosurfaceGeneration
             }
             else
             {
-                List<int> updateChunks = new(); // TODO: initialize as chunks that already contain geometry
+                List<int> updateChunks = new();
+
+                // Initialize update chunks list with chunks that already contain geometry
+                for (int i = 0; i < m_Chunks.Length; i++)
+                    if (m_Chunks[i].ContainsGeometry)
+                        updateChunks.Add(i);
 
                 // First fill entire map with value.
                 for (int i = 0; i < m_Chunks.Length; i++)

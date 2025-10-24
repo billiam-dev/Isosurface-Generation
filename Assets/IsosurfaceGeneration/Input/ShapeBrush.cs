@@ -36,18 +36,20 @@ namespace IsosurfaceGeneration.Input
         [SerializeField]
         float m_Dimention2 = 4.0f;
 
-        public bool PropertyChanged
+        public bool IsDirty
         {
             get
             {
-                return m_PropertyChanged || transform.hasChanged;
+                return m_IsDirty || transform.hasChanged;
             }
             set
             {
-                m_PropertyChanged = value;
+                m_IsDirty = value;
                 transform.hasChanged = value;
             }
         }
+
+        bool m_IsDirty;
 
         public int OrderInQueue
         {
@@ -62,7 +64,6 @@ namespace IsosurfaceGeneration.Input
             }
         }
 
-        bool m_PropertyChanged;
         int m_OrderInQueue = -1;
 
         public void SetType(ShapeFunction type)
@@ -96,7 +97,7 @@ namespace IsosurfaceGeneration.Input
         void OnValidate()
         {
             UpdateName();
-            m_PropertyChanged = true;
+            m_IsDirty = true;
         }
 
         public void DrawChunkVolume(Isosurface isosurface)

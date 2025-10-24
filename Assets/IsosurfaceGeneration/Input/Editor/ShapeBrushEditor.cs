@@ -7,9 +7,9 @@ namespace IsosurfaceGeneration.Input
 {
     [CanEditMultipleObjects]
     [CustomEditor(typeof(ShapeBrush), true)]
-    class ShapeBrushEditor : Editor
+    public class ShapeBrushEditor : Editor
     {
-        SerializedProperty m_Shape;
+        SerializedProperty m_ShapeType;
         SerializedProperty m_BlendMode;
         SerializedProperty m_Sharpness;
         SerializedProperty m_Dimention1;
@@ -23,7 +23,7 @@ namespace IsosurfaceGeneration.Input
 
         void OnEnable()
         {
-            m_Shape = serializedObject.FindProperty("m_ShapeType");
+            m_ShapeType = serializedObject.FindProperty("m_ShapeType");
             m_BlendMode = serializedObject.FindProperty("m_BlendMode");
             m_Sharpness = serializedObject.FindProperty("m_Sharpness");
             m_Dimention1 = serializedObject.FindProperty("m_Dimention1");
@@ -36,11 +36,11 @@ namespace IsosurfaceGeneration.Input
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(m_Shape, new GUIContent("Shape"));
+            EditorGUILayout.PropertyField(m_ShapeType, new GUIContent("Shape"));
             EditorGUILayout.PropertyField(m_BlendMode, new GUIContent("Blend Mode"));
             EditorGUILayout.PropertyField(m_Sharpness, new GUIContent("Sharpness"));
 
-            switch ((ShapeFunction)m_Shape.enumValueIndex)
+            switch ((ShapeFunction)m_ShapeType.enumValueIndex)
             {
                 case ShapeFunction.Sphere:
                     EditorGUILayout.PropertyField(m_Dimention1, new GUIContent("Radius"));
@@ -69,7 +69,7 @@ namespace IsosurfaceGeneration.Input
         {
             serializedObject.Update();
 
-            EditorGUI.PropertyField(rect, m_Shape, new GUIContent("Shape"));
+            EditorGUI.PropertyField(rect, m_ShapeType, new GUIContent("Shape"));
             rect.y += lineSpacing;
 
             EditorGUI.PropertyField(rect, m_BlendMode, new GUIContent("Blend Mode"));
@@ -78,19 +78,19 @@ namespace IsosurfaceGeneration.Input
             EditorGUI.PropertyField(rect, m_Sharpness, new GUIContent("Sharpness"));
             rect.y += lineSpacing;
 
-            switch ((ShapeFunction)m_Shape.enumValueIndex)
+            switch ((ShapeFunction)m_ShapeType.enumValueIndex)
             {
                 case ShapeFunction.Sphere:
                     EditorGUI.PropertyField(rect, m_Dimention1, new GUIContent("Radius"));
                     rect.y += lineSpacing;
-
                     break;
 
                 case ShapeFunction.SemiSphere:
                     EditorGUI.PropertyField(rect, m_Dimention1, new GUIContent("Radius"));
                     rect.y += lineSpacing;
+                    m_Dimention2.floatValue = EditorGUI.Slider(rect, new GUIContent("Slice"), m_Dimention2.floatValue / m_Dimention1.floatValue, -0.99f, 0.99f) * m_Dimention1.floatValue;
+                    rect.y += lineSpacing;
 
-                    m_Dimention2.floatValue = EditorGUILayout.Slider(new GUIContent("Slice"), m_Dimention2.floatValue / m_Dimention1.floatValue, -0.99f, 0.99f) * m_Dimention1.floatValue;
                     break;
 
                 case ShapeFunction.Capsule:
@@ -99,7 +99,6 @@ namespace IsosurfaceGeneration.Input
 
                     EditorGUI.PropertyField(rect, m_Dimention2, new GUIContent("Radius"));
                     rect.y += lineSpacing;
-
                     break;
 
                 case ShapeFunction.Torus:
@@ -108,7 +107,6 @@ namespace IsosurfaceGeneration.Input
 
                     EditorGUI.PropertyField(rect, m_Dimention2, new GUIContent("Inner Radius"));
                     rect.y += lineSpacing;
-
                     break;
             }
 
@@ -117,13 +115,12 @@ namespace IsosurfaceGeneration.Input
 
         void OnSceneGUI()
         {
-            // Draw editor bounds handle.
             Handles.matrix = m_Target.transform.localToWorldMatrix;
             Handles.color = Color.green;
 
             EditorGUI.BeginChangeCheck();
 
-            switch ((ShapeFunction)m_Shape.enumValueIndex)
+            switch ((ShapeFunction)m_ShapeType.enumValueIndex)
             {
                 case ShapeFunction.Sphere:
                     DrawSphereHandle();
@@ -145,57 +142,54 @@ namespace IsosurfaceGeneration.Input
 
         void DrawSphereHandle()
         {
-            if (m_SphereBoundsHandle == null)
-                m_SphereBoundsHandle = new();
+            m_SphereBoundsHandle ??= new();
 
             m_SphereBoundsHandle.center = Vector3.zero;
             m_SphereBoundsHandle.radius = m_Dimention1.floatValue;
-
             m_SphereBoundsHandle.DrawHandle();
+
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(target, "Edited Sphere");
 
                 m_Dimention1.SetUnderlyingValue(m_SphereBoundsHandle.radius);
-                m_Target.PropertyChanged = true;
+                m_Target.IsDirty = true;
             }
         }
 
         void DrawCapsuleHandle()
         {
-            if (m_CapsuleBoundsHandle == null)
-                m_CapsuleBoundsHandle = new();
+            m_CapsuleBoundsHandle ??= new();
 
             m_CapsuleBoundsHandle.center = Vector3.zero;
             m_CapsuleBoundsHandle.height = (m_Dimention1.floatValue + m_Dimention2.floatValue) * 2;
             m_CapsuleBoundsHandle.radius = m_Dimention2.floatValue;
-
             m_CapsuleBoundsHandle.DrawHandle();
+
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(target, "Edited Capsule");
 
                 m_Dimention1.SetUnderlyingValue((m_CapsuleBoundsHandle.height / 2) - m_CapsuleBoundsHandle.radius);
                 m_Dimention2.SetUnderlyingValue(m_CapsuleBoundsHandle.radius);
-                m_Target.PropertyChanged = true;
+                m_Target.IsDirty = true;
             }
         }
 
         void DrawTorusHandle()
         {
-            if (m_TorusBoundsHandle == null)
-                m_TorusBoundsHandle = new();
+            m_TorusBoundsHandle ??= new();
 
             m_TorusBoundsHandle.center = Vector3.zero;
             m_TorusBoundsHandle.radius = m_Dimention1.floatValue;
-
             m_TorusBoundsHandle.DrawHandle();
+
             if (EditorGUI.EndChangeCheck())
             {
                 Undo.RecordObject(target, "Edited Torus");
 
                 m_Dimention1.SetUnderlyingValue(m_TorusBoundsHandle.radius);
-                m_Target.PropertyChanged = true;
+                m_Target.IsDirty = true;
             }
         }
     }

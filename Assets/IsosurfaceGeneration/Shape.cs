@@ -65,7 +65,7 @@ namespace IsosurfaceGeneration
                     break;
             }
 
-            // m_Sharpness factor
+            // Sharpness factor
             boundsVolume *= 2.0f / sharpness;
 
             // TODO
