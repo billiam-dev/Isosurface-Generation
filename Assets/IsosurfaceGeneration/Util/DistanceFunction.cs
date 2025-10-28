@@ -1,4 +1,5 @@
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace IsosurfaceGeneration.Util
 {
@@ -36,6 +37,13 @@ namespace IsosurfaceGeneration.Util
         {
             float2 q = new(math.length(centre.xz) - outerRadius, centre.y);
             return math.length(q) - innerRadius;
+        }
+
+        public static float Cube(float3 centre, float width, float height, float depth)
+        {
+            float3 size = new float3(width, height, depth);
+            float3 q = math.abs(centre) - size;
+            return math.length(math.max(q, 0.0f)) + math.min(math.max(q.x, math.max(q.y, q.z)), 0.0f);
         }
     }
 }

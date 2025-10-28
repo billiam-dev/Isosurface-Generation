@@ -14,10 +14,12 @@ namespace IsosurfaceGeneration.Input
         SerializedProperty m_Sharpness;
         SerializedProperty m_Dimention1;
         SerializedProperty m_Dimention2;
+        SerializedProperty m_Dimention3;
 
         SphereBoundsHandle m_SphereBoundsHandle;
         CapsuleBoundsHandle m_CapsuleBoundsHandle;
         TorusBoundsHandle m_TorusBoundsHandle;
+        BoxBoundsHandle m_BoxBoundsHandle;
 
         ShapeBrush m_Target;
 
@@ -28,6 +30,7 @@ namespace IsosurfaceGeneration.Input
             m_Sharpness = serializedObject.FindProperty("m_Sharpness");
             m_Dimention1 = serializedObject.FindProperty("m_Dimention1");
             m_Dimention2 = serializedObject.FindProperty("m_Dimention2");
+            m_Dimention3 = serializedObject.FindProperty("m_Dimention3");
 
             m_Target = (ShapeBrush)target;
         }
@@ -59,6 +62,12 @@ namespace IsosurfaceGeneration.Input
                 case ShapeFunction.Torus:
                     EditorGUILayout.PropertyField(m_Dimention1, new GUIContent("Outer Radius"));
                     EditorGUILayout.PropertyField(m_Dimention2, new GUIContent("Inner Radius"));
+                    break;
+
+                case ShapeFunction.Cube:
+                    EditorGUILayout.PropertyField(m_Dimention1, new GUIContent("Width"));
+                    EditorGUILayout.PropertyField(m_Dimention2, new GUIContent("Height"));
+                    EditorGUILayout.PropertyField(m_Dimention3, new GUIContent("Depth"));
                     break;
             }
 
@@ -108,6 +117,13 @@ namespace IsosurfaceGeneration.Input
                     EditorGUI.PropertyField(rect, m_Dimention2, new GUIContent("Inner Radius"));
                     rect.y += lineSpacing;
                     break;
+
+                case ShapeFunction.Cube:
+                    EditorGUI.PropertyField(rect, m_Dimention1, new GUIContent("Size"));
+                    EditorGUI.PropertyField(rect, m_Dimention2, new GUIContent("Height"));
+                    EditorGUI.PropertyField(rect, m_Dimention3, new GUIContent("Depth"));
+                    rect.y += lineSpacing;
+                    break;
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -137,6 +153,10 @@ namespace IsosurfaceGeneration.Input
                 case ShapeFunction.Torus:
                     DrawTorusHandle();
                     break;
+
+                case ShapeFunction.Cube:
+                    DrawBoxHandle();
+                    break;
             }
         }
 
@@ -162,7 +182,7 @@ namespace IsosurfaceGeneration.Input
             m_CapsuleBoundsHandle ??= new();
 
             m_CapsuleBoundsHandle.center = Vector3.zero;
-            m_CapsuleBoundsHandle.height = (m_Dimention1.floatValue + m_Dimention2.floatValue) * 2;
+            m_CapsuleBoundsHandle.height = (m_Dimention1.floatValue + m_Dimention2.floatValue) * 2.0f;
             m_CapsuleBoundsHandle.radius = m_Dimention2.floatValue;
             m_CapsuleBoundsHandle.DrawHandle();
 
@@ -170,7 +190,7 @@ namespace IsosurfaceGeneration.Input
             {
                 Undo.RecordObject(target, "Edited Capsule");
 
-                m_Dimention1.SetUnderlyingValue((m_CapsuleBoundsHandle.height / 2) - m_CapsuleBoundsHandle.radius);
+                m_Dimention1.SetUnderlyingValue((m_CapsuleBoundsHandle.height / 2.0f) - m_CapsuleBoundsHandle.radius);
                 m_Dimention2.SetUnderlyingValue(m_CapsuleBoundsHandle.radius);
                 m_Target.IsDirty = true;
             }
@@ -189,6 +209,26 @@ namespace IsosurfaceGeneration.Input
                 Undo.RecordObject(target, "Edited Torus");
 
                 m_Dimention1.SetUnderlyingValue(m_TorusBoundsHandle.radius);
+                m_Target.IsDirty = true;
+            }
+        }
+
+        void DrawBoxHandle()
+        {
+            m_BoxBoundsHandle ??= new();
+
+            m_BoxBoundsHandle.center = Vector3.zero;
+            Vector3 size = new Vector3(m_Dimention1.floatValue,m_Dimention2.floatValue, m_Dimention3.floatValue) * 2.0f;
+            m_BoxBoundsHandle.size = size;
+            m_BoxBoundsHandle.DrawHandle();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                Undo.RecordObject(target, "Edited Cube");
+
+                m_Dimention1.SetUnderlyingValue(m_BoxBoundsHandle.size.x / 2.0f);
+                m_Dimention2.SetUnderlyingValue(m_BoxBoundsHandle.size.y / 2.0f);
+                m_Dimention3.SetUnderlyingValue(m_BoxBoundsHandle.size.z / 2.0f);
                 m_Target.IsDirty = true;
             }
         }

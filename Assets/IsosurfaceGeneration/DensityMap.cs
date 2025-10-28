@@ -202,6 +202,17 @@ namespace IsosurfaceGeneration
                     };
                     applyTorusJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
+                case ShapeFunction.Cube:
+                    ApplyCubeJob applyCubeJob = new()
+                    {
+                        density = density,
+                        pointsPerAxis = pointsPerAxis,
+                        chunkOriginIndex = chunkOriginIndex,
+                        shape = shape,
+                        localMatrix = localMatrix
+                    };
+                    applyCubeJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
+                    break;
             }
         }
         #endregion

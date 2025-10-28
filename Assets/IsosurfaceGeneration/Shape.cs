@@ -11,6 +11,7 @@ namespace IsosurfaceGeneration
         public float sharpness;
         public float dimention1;
         public float dimention2;
+        public float dimention3;
 
         public float Distance(float3 position)
         {
@@ -20,6 +21,7 @@ namespace IsosurfaceGeneration
                 ShapeFunction.SemiSphere => DistanceFunction.SemiSphere(position, dimention1, dimention2),
                 ShapeFunction.Capsule => DistanceFunction.Capsule(position, dimention1, dimention2),
                 ShapeFunction.Torus => DistanceFunction.Torus(position, dimention1, dimention2),
+                ShapeFunction.Cube => DistanceFunction.Cube(position, dimention1, dimention2, dimention3),
                 _ => -32,
             };
         }
@@ -57,6 +59,12 @@ namespace IsosurfaceGeneration
                 case ShapeFunction.Torus:
                     boundsVolume = (dimention1 + dimention2) * 2.5f;
                     break;
+
+                case ShapeFunction.Cube:
+                    boundsVolume.x = dimention1 * 2.0f;
+                    boundsVolume.y = dimention2 * 2.0f;
+                    boundsVolume.z = dimention3 * 2.0f;
+                    break;
             }
 
             // Sharpness factor
@@ -83,7 +91,8 @@ namespace IsosurfaceGeneration
         Sphere,
         SemiSphere,
         Capsule,
-        Torus
+        Torus,
+        Cube
     }
 
     public enum BlendMode

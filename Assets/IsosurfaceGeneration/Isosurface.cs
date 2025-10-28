@@ -459,24 +459,29 @@ namespace IsosurfaceGeneration
             if (m_TextAreaRect == null)
                 m_TextAreaRect = new(k_Margin, k_Margin, k_Width, k_Height);
 
-            if (m_Style == null)
-                m_Style = new GUIStyle()
-                {
-                    normal = new GUIStyleState()
-                    {
-                        textColor = Color.white,
-                    },
-                    fontSize = 24
-                };
+            m_Style ??= new GUIStyle() {
+                normal = new GUIStyleState() {
+                    textColor = Color.white,
+                },
+                fontSize = 24
+            };
 
             Rect copyRect = m_TextAreaRect;
 
             copyRect.y += k_Height;
-            GUI.Label(copyRect, $"{ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)}", m_Style);
+            GUI.Label(copyRect, $"Total Chunks: {m_Chunks.Length}", m_Style);
             copyRect.y += k_Height;
-            GUI.Label(copyRect, $"d: {ToMilliseconds(m_DensityTimestamp)}", m_Style);
+            GUI.Label(copyRect, $"Total Voxels: {ChunkSizeCells * ChunkSizeCells * ChunkSizeCells * m_Chunks.Length}", m_Style);
+
             copyRect.y += k_Height;
-            GUI.Label(copyRect, $"m: {ToMilliseconds(m_MeshTimestamp)}", m_Style);
+            GUI.Label(copyRect, "", m_Style);
+
+            copyRect.y += k_Height;
+            GUI.Label(copyRect, $"Recomputation Time: {ToMilliseconds(m_DensityTimestamp + m_MeshTimestamp)}ms", m_Style);
+            copyRect.y += k_Height;
+            GUI.Label(copyRect, $"d: {ToMilliseconds(m_DensityTimestamp)}ms", m_Style);
+            copyRect.y += k_Height;
+            GUI.Label(copyRect, $"m: {ToMilliseconds(m_MeshTimestamp)}ms", m_Style);
         }
 
         void BeginProfiler(ref double timestamp)

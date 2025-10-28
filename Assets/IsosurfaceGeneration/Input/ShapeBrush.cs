@@ -36,6 +36,10 @@ namespace IsosurfaceGeneration.Input
         [SerializeField]
         float m_Dimention2 = 4.0f;
 
+        [Min(0)]
+        [SerializeField]
+        float m_Dimention3 = 4.0f;
+
         public bool IsDirty
         {
             get
@@ -82,6 +86,7 @@ namespace IsosurfaceGeneration.Input
                 sharpness = m_Sharpness,
                 dimention1 = m_Dimention1,
                 dimention2 = m_Dimention2,
+                dimention3 = m_Dimention3,
             };
         }
 

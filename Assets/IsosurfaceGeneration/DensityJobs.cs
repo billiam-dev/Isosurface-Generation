@@ -117,4 +117,22 @@ namespace IsosurfaceGeneration
             DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
         }
     }
+
+    [BurstCompile(CompileSynchronously = true, DisableSafetyChecks = true, FloatMode = FloatMode.Fast, FloatPrecision = FloatPrecision.Low)]
+    public struct ApplyCubeJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction] public NativeArray<float> density;
+        [ReadOnly] public int pointsPerAxis;
+        [ReadOnly] public int3 chunkOriginIndex;
+
+        [ReadOnly] public Shape shape;
+        [ReadOnly] public AffineTransform localMatrix;
+
+        public void Execute(int index)
+        {
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, localMatrix);
+            float distance = DistanceFunction.Cube(pos, shape.dimention1, shape.dimention2, shape.dimention3);
+            DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
+        }
+    }
 }
