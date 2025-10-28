@@ -4,7 +4,7 @@ namespace IsosurfaceGeneration.Util
 {
     // SDF Primatives
     // See: https://iquilezles.org/articles/distfunctions/
-    public struct DistanceFunction
+    public static class DistanceFunction
     {
         public static float Sphere(float3 centre, float radius)
         {

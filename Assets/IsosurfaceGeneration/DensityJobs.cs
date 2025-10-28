@@ -28,13 +28,18 @@ namespace IsosurfaceGeneration
         [ReadOnly] public float initialValue;
         [ReadOnly] public NativeArray<Shape> shapes;
 
+        [ReadOnly] public float3 surfacePosition;
+
         public void Execute(int index)
         {
             density[index] = initialValue;
 
             for (int i = 0; i < shapes.Length; i++)
             {
-                float3 pos = shapes[i].TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+                AffineTransform localMatrix = shapes[i].matrix;
+                localMatrix.t -= surfacePosition;
+
+                float3 pos = shapes[i].TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, math.inverse(localMatrix));
                 DensityHelpers.ApplyDistanceFunction(density, index, shapes[i].Distance(pos), shapes[i].sharpness, shapes[i].blendMode == BlendMode.Subtractive);
             }
         }
@@ -49,10 +54,11 @@ namespace IsosurfaceGeneration
         [ReadOnly] public int3 chunkOriginIndex;
 
         [ReadOnly] public Shape shape;
+        [ReadOnly] public AffineTransform localMatrix;
 
         public void Execute(int index)
         {
-            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, localMatrix);
             float distance = DistanceFunction.Sphere(pos, shape.dimention1);
             DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
         }
@@ -66,10 +72,11 @@ namespace IsosurfaceGeneration
         [ReadOnly] public int3 chunkOriginIndex;
 
         [ReadOnly] public Shape shape;
+        [ReadOnly] public AffineTransform localMatrix;
 
         public void Execute(int index)
         {
-            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, localMatrix);
             float distance = DistanceFunction.SemiSphere(pos, shape.dimention1, shape.dimention2);
             DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
         }
@@ -83,10 +90,11 @@ namespace IsosurfaceGeneration
         [ReadOnly] public int3 chunkOriginIndex;
 
         [ReadOnly] public Shape shape;
+        [ReadOnly] public AffineTransform localMatrix;
 
         public void Execute(int index)
         {
-            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, localMatrix);
             float distance = DistanceFunction.Capsule(pos, shape.dimention1, shape.dimention2);
             DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
         }
@@ -100,10 +108,11 @@ namespace IsosurfaceGeneration
         [ReadOnly] public int3 chunkOriginIndex;
 
         [ReadOnly] public Shape shape;
+        [ReadOnly] public AffineTransform localMatrix;
 
         public void Execute(int index)
         {
-            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex);
+            float3 pos = shape.TransformPosition(IndexHelper.Unwrap(index, pointsPerAxis) + chunkOriginIndex, localMatrix);
             float distance = DistanceFunction.Torus(pos, shape.dimention1, shape.dimention2);
             DensityHelpers.ApplyDistanceFunction(density, index, distance, shape.sharpness, shape.blendMode == BlendMode.Subtractive);
         }

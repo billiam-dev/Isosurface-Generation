@@ -71,15 +71,12 @@ namespace IsosurfaceGeneration.Input
             m_ShapeType = type;
         }
 
-        public Shape GetShapeProperties(Isosurface surface)
+        public Shape GetShapeProperties()
         {
-            Vector3 pos = transform.position - surface.transform.position;
-            // TODO: make rest of matrix local
-            AffineTransform matrix = new((float3)pos, (quaternion)transform.rotation, (float3)transform.lossyScale);
-
+            AffineTransform matrix = new((float3)transform.position, (quaternion)transform.rotation, (float3)transform.lossyScale);
             return new Shape()
             {
-                matrix = math.inverse(matrix),
+                matrix = matrix,
                 shapeID = m_ShapeType,
                 blendMode = m_BlendMode,
                 sharpness = m_Sharpness,
@@ -102,7 +99,7 @@ namespace IsosurfaceGeneration.Input
 
         public void DrawChunkVolume(Isosurface isosurface)
         {
-            int3 chunkVolume = GetShapeProperties(isosurface).ComputeChunkVolume(isosurface);
+            int3 chunkVolume = GetShapeProperties().ComputeChunkVolume(isosurface);
             isosurface.ComputeIndices(transform.position, out int3 chunkIndex, out int3 densityIndex);
 
             Vector3 centre = new(chunkIndex.x, chunkIndex.y, chunkIndex.z);

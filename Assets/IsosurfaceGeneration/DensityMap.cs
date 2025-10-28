@@ -40,16 +40,16 @@ namespace IsosurfaceGeneration
         /// <summary>
         /// Recompute this density map with a shape queue. For total regeneration.
         /// </summary>
-        public void RecomputeDensityMap(float initialValue, NativeArray<Shape> shapes, DensityGenerationMethod method)
+        public void RecomputeDensityMap(float initialValue, NativeArray<Shape> shapes, float3 surfacePosition, DensityGenerationMethod method)
         {
             switch (method)
             {
                 case DensityGenerationMethod.Recompute:
-                    RecomputeDensity(initialValue, shapes);
+                    RecomputeDensity(initialValue, shapes, surfacePosition);
                     break;
 
                 case DensityGenerationMethod.RecomputeJobs:
-                    RecomputeDensity_Jobs(initialValue, shapes);
+                    RecomputeDensity_Jobs(initialValue, shapes, surfacePosition);
                     break;
             }
         }
@@ -75,20 +75,20 @@ namespace IsosurfaceGeneration
         /// <summary>
         /// Apply a shape to this density map.
         /// </summary>
-        public void ApplyShape(Shape shape, DensityGenerationMethod method)
+        public void ApplyShape(Shape shape, AffineTransform localMatrix, DensityGenerationMethod method)
         {
             switch (method)
             {
                 case DensityGenerationMethod.Recompute:
-                    ApplyShape(shape);
+                    ApplyShape(shape, localMatrix);
                     break;
 
                 case DensityGenerationMethod.RecomputeJobs:
-                    ApplyShape_Jobs(shape);
+                    ApplyShape_Jobs(shape, localMatrix);
                     break;
 
                 case DensityGenerationMethod.UseShapeVolumesJobs:
-                    ApplyShape_Jobs(shape);
+                    ApplyShape_Jobs(shape, localMatrix);
                     break;
             }
         }
@@ -100,7 +100,7 @@ namespace IsosurfaceGeneration
                 density[i] = value;
         }
 
-        void RecomputeDensity(float value, NativeArray<Shape> shapeQueue)
+        void RecomputeDensity(float value, NativeArray<Shape> shapeQueue, float3 surfacePosition)
         {
             for (int i = 0; i < density.Length; i++)
             {
@@ -108,17 +108,20 @@ namespace IsosurfaceGeneration
 
                 foreach (Shape shape in shapeQueue)
                 {
-                    float3 pos = shape.TransformPosition(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex);
+                    AffineTransform localMatrix = shape.matrix;
+                    localMatrix.t -= surfacePosition;
+
+                    float3 pos = shape.TransformPosition(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex, math.inverse(localMatrix));
                     DensityHelpers.ApplyDistanceFunction(density, i, shape.Distance(pos), shape.sharpness, shape.blendMode == BlendMode.Subtractive);
                 }
             }
         }
 
-        void ApplyShape(Shape shape)
+        void ApplyShape(Shape shape, AffineTransform localMatrix)
         {
             for (int i = 0; i < density.Length; i++)
             {
-                float3 pos = shape.TransformPosition(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex);
+                float3 pos = shape.TransformPosition(IndexHelper.Unwrap(i, pointsPerAxis) + chunkOriginIndex, localMatrix);
                 DensityHelpers.ApplyDistanceFunction(density, i, shape.Distance(pos), shape.sharpness, shape.blendMode == BlendMode.Subtractive);
             }
         }
@@ -136,7 +139,7 @@ namespace IsosurfaceGeneration
             fillDensityJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
         }
 
-        void RecomputeDensity_Jobs(float initialValue, NativeArray<Shape> shapeQueue)
+        void RecomputeDensity_Jobs(float initialValue, NativeArray<Shape> shapeQueue, float3 surfacePosition)
         {
             RecomputeDensityJob recomputeDensityJob = new()
             {
@@ -144,13 +147,14 @@ namespace IsosurfaceGeneration
                 pointsPerAxis = pointsPerAxis,
                 chunkOriginIndex = chunkOriginIndex,
                 initialValue = initialValue,
-                shapes = shapeQueue
+                shapes = shapeQueue,
+                surfacePosition = surfacePosition
             };
 
             recomputeDensityJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
         }
 
-        void ApplyShape_Jobs(Shape shape)
+        void ApplyShape_Jobs(Shape shape, AffineTransform localMatrix)
         {
             switch (shape.shapeID)
             {
@@ -160,7 +164,8 @@ namespace IsosurfaceGeneration
                         density = density,
                         pointsPerAxis = pointsPerAxis,
                         chunkOriginIndex = chunkOriginIndex,
-                        shape = shape
+                        shape = shape,
+                        localMatrix = localMatrix
                     };
                     applyShereJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
@@ -170,7 +175,8 @@ namespace IsosurfaceGeneration
                         density = density,
                         pointsPerAxis = pointsPerAxis,
                         chunkOriginIndex = chunkOriginIndex,
-                        shape = shape
+                        shape = shape,
+                        localMatrix = localMatrix
                     };
                     applySemiSphereJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
@@ -180,7 +186,8 @@ namespace IsosurfaceGeneration
                         density = density,
                         pointsPerAxis = pointsPerAxis,
                         chunkOriginIndex = chunkOriginIndex,
-                        shape = shape
+                        shape = shape,
+                        localMatrix = localMatrix
                     };
                     applyCapsuleJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;
@@ -190,7 +197,8 @@ namespace IsosurfaceGeneration
                         density = density,
                         pointsPerAxis = pointsPerAxis,
                         chunkOriginIndex = chunkOriginIndex,
-                        shape = shape
+                        shape = shape,
+                        localMatrix = localMatrix
                     };
                     applyTorusJob.Schedule(totalPoints, k_InterloopBatchCount).Complete();
                     break;

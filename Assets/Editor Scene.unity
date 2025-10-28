@@ -1335,7 +1335,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.19020736, z: -0, w: 0.98174393}
   m_LocalPosition: {x: 60.21855, y: 14.200001, z: 64.79968}
-  m_LocalScale: {x: 0.85, y: 1.07, z: 0.85}
+  m_LocalScale: {x: 0.85, y: 1, z: 0.85}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 975179716}
@@ -2049,7 +2049,7 @@ Transform:
   m_GameObject: {fileID: 1550291594}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 180, y: 60, z: 64}
+  m_LocalPosition: {x: 180, y: 60, z: 72}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2387,7 +2387,7 @@ GameObject:
   - component: {fileID: 1669996629}
   - component: {fileID: 1669996628}
   m_Layer: 0
-  m_Name: '-1: Sphere Brush (Additive)'
+  m_Name: '0: Sphere Brush (Additive)'
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2468,7 +2468,7 @@ Transform:
   m_GameObject: {fileID: 1710611594}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.19020736, z: -0, w: 0.98174393}
-  m_LocalPosition: {x: 70.84338, y: 82.5, z: 17.574467}
+  m_LocalPosition: {x: 69.4, y: 82.5, z: 21.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2937,7 +2937,7 @@ Transform:
   m_GameObject: {fileID: 1945680731}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.19020736, z: -0, w: 0.98174393}
-  m_LocalPosition: {x: 77.706154, y: 103.82001, z: 16.995628}
+  m_LocalPosition: {x: 77.706154, y: 98.7, z: 16.995628}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3380,7 +3380,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1992562658
 Transform:
   m_ObjectHideFlags: 0
@@ -3411,7 +3411,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.ProceduralTerrain
   MeshingMethod: 1
-  DensityMethod: 1
+  DensityMethod: 2
   Dimentions:
     x: 1
     y: 1
@@ -3433,7 +3433,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5cb754568eb328f428a0950fe675b57b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IsosurfaceGeneration.Input.RealtimeShapesInput
-  m_ShapeBrushes: []
+  m_ShapeBrushes:
+  - {fileID: 1669996628}
 --- !u!1 &2052320107
 GameObject:
   m_ObjectHideFlags: 0

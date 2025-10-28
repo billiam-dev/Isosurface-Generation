@@ -96,13 +96,10 @@ namespace IsosurfaceGeneration.Input
 
         void ApplyShape(Isosurface surface, Vector3 position, BlendMode blendMode)
         {
-            Vector3 pos = position - surface.transform.position;
-            // TODO: make rest of matrix local
-            AffineTransform matrix = new((float3)pos, quaternion.identity, 1.0f);
-
+            AffineTransform matrix = new((float3)position, quaternion.identity, 1.0f);
             Shape shape = new()
             {
-                matrix = math.inverse(matrix),
+                matrix = matrix,
                 shapeID = ShapeFunction.Sphere,
                 blendMode = blendMode,
                 sharpness = m_Sharpness,

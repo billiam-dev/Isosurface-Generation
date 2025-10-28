@@ -126,7 +126,7 @@ namespace IsosurfaceGeneration
             {
                 // Loop through all chunks, set initial value and then apply all shapes.
                 for (int i = 0; i < m_Chunks.Length; i++)
-                    m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, DensityMethod);
+                    m_Chunks[i].DensityMap.RecomputeDensityMap(baseDensity, shapeQueue, (float3)transform.position, DensityMethod);
 
                 EndProfilier(ref m_DensityTimestamp);
 
@@ -194,8 +194,11 @@ namespace IsosurfaceGeneration
         }
 
         void ApplyShapeWithBoundingVolume(Shape shape, out List<int> effectedChunks)
-        {            
-            ComputeIndices(PositionToIndex(shape.inverseMatrix.t), out int3 chunkIndex, out _);
+        {
+            AffineTransform localMatrix = shape.matrix;
+            localMatrix.t -= (float3)transform.position;
+
+            ComputeIndices(PositionToIndex(localMatrix.t), out int3 chunkIndex, out _);
 
             effectedChunks = new();
             int3 chunkVolume = shape.ComputeChunkVolume(this);
@@ -214,7 +217,7 @@ namespace IsosurfaceGeneration
                             continue;
 
                         int index = IndexHelper.Wrap(wrappedIndex, m_Dimentions);
-                        m_Chunks[index].DensityMap.ApplyShape(shape, DensityMethod);
+                        m_Chunks[index].DensityMap.ApplyShape(shape, math.inverse(localMatrix), DensityMethod);
                         effectedChunks.Add(index);
                     }
                 }

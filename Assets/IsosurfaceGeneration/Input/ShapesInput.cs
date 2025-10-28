@@ -115,7 +115,7 @@ namespace IsosurfaceGeneration.Input
                 }
 
                 // Add brush to shape queue.
-                m_ShapeQueue.Add(shaper.GetShapeProperties(m_Isosurface));
+                m_ShapeQueue.Add(shaper.GetShapeProperties());
             }
 
             // Evaluate changes in queue length.

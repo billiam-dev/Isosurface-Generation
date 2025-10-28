@@ -5,8 +5,7 @@ namespace IsosurfaceGeneration
 {
     public struct Shape
     {
-        public AffineTransform matrix; // worldToLocal
-        public AffineTransform inverseMatrix => math.inverse(matrix); // localToWorld
+        public AffineTransform matrix;
         public ShapeFunction shapeID;
         public BlendMode blendMode;
         public float sharpness;
@@ -15,24 +14,19 @@ namespace IsosurfaceGeneration
 
         public float Distance(float3 position)
         {
-            switch (shapeID)
+            return shapeID switch
             {
-                case ShapeFunction.Sphere:
-                    return DistanceFunction.Sphere(position, dimention1);
-                case ShapeFunction.SemiSphere:
-                    return DistanceFunction.SemiSphere(position, dimention1, dimention2);
-                case ShapeFunction.Capsule:
-                    return DistanceFunction.Capsule(position, dimention1, dimention2);
-                case ShapeFunction.Torus:
-                    return DistanceFunction.Torus(position, dimention1, dimention2);
-                default:
-                    return -32;
-            }
+                ShapeFunction.Sphere => DistanceFunction.Sphere(position, dimention1),
+                ShapeFunction.SemiSphere => DistanceFunction.SemiSphere(position, dimention1, dimention2),
+                ShapeFunction.Capsule => DistanceFunction.Capsule(position, dimention1, dimention2),
+                ShapeFunction.Torus => DistanceFunction.Torus(position, dimention1, dimention2),
+                _ => -32,
+            };
         }
 
-        public float3 TransformPosition(float3 position)
+        public float3 TransformPosition(float3 position, AffineTransform localMatrix)
         {
-            float4 transformedPos = math.mul(matrix, new float4(position, 1)); // The input position is in local space, attained via the index of the voxels, so we multiply it by the shape's worldToLocal matrix.
+            float4 transformedPos = math.mul(localMatrix, new float4(position, 1)); // The input position is in local space, attained via the index of the voxels, so we multiply it by the shape's worldToLocal matrix.
             return new float3(transformedPos.x, transformedPos.y, transformedPos.z);
         }
 
