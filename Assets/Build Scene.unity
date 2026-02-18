@@ -4148,7 +4148,7 @@ MonoBehaviour:
   IsoLevel: 0
   InvertSurface: 0
   Material: {fileID: 2100000, guid: 7a391d520ffdd5f4bba8350461f267be, type: 2}
-  SendLogMessages: 0
+  SendLogMessages: 1
 --- !u!4 &2129895804
 Transform:
   m_ObjectHideFlags: 0

@@ -224,6 +224,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &233575364
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 233575365}
+  - component: {fileID: 233575366}
+  m_Layer: 0
+  m_Name: '1: Capsule Brush (Subtractive)'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &233575365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233575364}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.30279106, y: 0.8773436, z: -0.33823538, w: 0.1555077}
+  m_LocalPosition: {x: 69.6, y: 73.54, z: 56.15}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 975179716}
+  m_LocalEulerAnglesHint: {x: 43.446, y: 174.623, z: 35.938}
+--- !u!114 &233575366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 233575364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
+  m_ShapeType: 2
+  m_BlendMode: 1
+  m_Sharpness: 0.706
+  m_Dimention1: 11.086704
+  m_Dimention2: 3.38
+  m_Dimention3: 4
 --- !u!1 &372619557
 GameObject:
   m_ObjectHideFlags: 0
@@ -240,7 +290,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &372619558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,6 +308,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 24
   m_Dimention2: 3
+  m_Dimention3: 4
 --- !u!4 &372619559
 Transform:
   m_ObjectHideFlags: 0
@@ -273,6 +324,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 975179716}
   m_LocalEulerAnglesHint: {x: 0, y: -23.54, z: -90}
+--- !u!1 &406599364
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 406599366}
+  - component: {fileID: 406599365}
+  m_Layer: 0
+  m_Name: '0: Sphere Brush (Additive)'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &406599365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 406599364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6158725d7bce56241bb0f34f663832b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.TerrainShaper
+  m_ShapeType: 0
+  m_BlendMode: 0
+  m_Sharpness: 0.2
+  m_Dimention1: 11.086704
+  m_Dimention2: 3.38
+  m_Dimention3: 4
+--- !u!4 &406599366
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 406599364}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.30279106, y: 0.8773436, z: -0.33823538, w: 0.1555077}
+  m_LocalPosition: {x: 70.6, y: 72.84, z: 54.64}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 975179716}
+  m_LocalEulerAnglesHint: {x: 43.446, y: 174.623, z: 35.938}
 --- !u!1 &463586068
 GameObject:
   m_ObjectHideFlags: 1
@@ -824,7 +925,7 @@ Transform:
   m_GameObject: {fileID: 950326875}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 69.9, y: 34.9, z: 32.2}
+  m_LocalPosition: {x: 37.3, y: 46.8, z: 32.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -874,13 +975,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MarchingCubes.RealtimeShapeQueue
   m_ShapeBrushes:
-  - {fileID: 372619558}
-  - {fileID: 1416525994}
-  - {fileID: 1131499565}
-  - {fileID: 1024668777}
-  - {fileID: 2052320108}
-  - {fileID: 1710611595}
-  - {fileID: 1945680732}
+  - {fileID: 406599365}
+  - {fileID: 233575366}
 --- !u!114 &975179715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -925,6 +1021,8 @@ Transform:
   - {fileID: 2052320109}
   - {fileID: 1710611596}
   - {fileID: 1945680733}
+  - {fileID: 406599366}
+  - {fileID: 233575365}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1000737257
@@ -1048,7 +1146,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1024668777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1066,6 +1164,7 @@ MonoBehaviour:
   m_Sharpness: 1
   m_Dimention1: 5
   m_Dimention2: 3.5
+  m_Dimention3: 4
 --- !u!4 &1024668778
 Transform:
   m_ObjectHideFlags: 0
@@ -1307,7 +1406,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1131499565
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1325,6 +1424,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 46.01
   m_Dimention2: 0
+  m_Dimention3: 4
 --- !u!4 &1131499566
 Transform:
   m_ObjectHideFlags: 0
@@ -1776,7 +1876,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1416525994
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1794,6 +1894,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 12
   m_Dimention2: 5
+  m_Dimention3: 4
 --- !u!4 &1416525995
 Transform:
   m_ObjectHideFlags: 0
@@ -2410,6 +2511,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 8
   m_Dimention2: 4
+  m_Dimention3: 4
 --- !u!4 &1669996629
 Transform:
   m_ObjectHideFlags: 0
@@ -2441,7 +2543,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1710611595
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2459,6 +2561,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 3
   m_Dimention2: 4
+  m_Dimention3: 4
 --- !u!4 &1710611596
 Transform:
   m_ObjectHideFlags: 0
@@ -2910,7 +3013,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1945680732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2928,6 +3031,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 2
   m_Dimention2: 4
+  m_Dimention3: 4
 --- !u!4 &1945680733
 Transform:
   m_ObjectHideFlags: 0
@@ -3451,7 +3555,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2052320108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3469,6 +3573,7 @@ MonoBehaviour:
   m_Sharpness: 0.2
   m_Dimention1: 4
   m_Dimention2: 4
+  m_Dimention3: 4
 --- !u!4 &2052320109
 Transform:
   m_ObjectHideFlags: 0
