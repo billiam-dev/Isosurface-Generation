@@ -1,7 +1,7 @@
 
 # Isosurface Generation
-This is my test project which I used to try and make a highly optimized mesh generator for signed distance fields. I tested both marching cubes and surface nets with the Unity JOBS system, which ended up being faster than my prior experiments with Compute Shaders.
-This is intended for use as reference, not as a game-ready system. I will be using the results of this experiment for a terrain system for my latest game project.
+Experimental project for isosurface extraction from SDFs. Features both marching cubes and surface nets generation methods, using the Unity JOBS system.
+This experiment was used to build a much more efficient and faster infinite terrain generator using transvoxel for LODing and brickmaps for storage efficiency.
 
 Built with Unity 6000.2.8f1
 
